@@ -523,7 +523,7 @@ typedef struct _KTHREAD_HDR {
 */
 } KTHREAD_HDR, *PKTHREAD_HDR;
 
-#ifndef __REACTOS__
+#if !defined(__REACTOS__) && !defined(_WIN64)
 typedef struct _IMAGE_DOS_HEADER {      // DOS .EXE header
     WORD   e_magic;                     // Magic number
     WORD   e_cblp;                      // Bytes on last page of file
@@ -629,7 +629,7 @@ typedef struct _IMAGE_EXPORT_DIRECTORY {
     DWORD   AddressOfNames;         // RVA from base of image
     DWORD   AddressOfNameOrdinals;  // RVA from base of image
 } IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
-#endif
+#endif // !defined(__REACTOS__) && !defined(_WIN64)
 
 NTHALAPI
 VOID
