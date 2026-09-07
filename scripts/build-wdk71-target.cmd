@@ -17,9 +17,14 @@ echo Unsupported architecture "%BUILD_ARCH%". Use x86 or x64. 1>&2
 exit /b 2
 
 :architecture_ok
-call "%DDKROOT%\bin\setenv.bat" "%DDKROOT%" fre %BUILD_ARCH% %BUILD_TARGET% no_oacr
-if errorlevel 1 exit /b 3
+echo Configuring WDK at "%DDKROOT%" for %BUILD_ARCH% %BUILD_TARGET%...
+call "%DDKROOT%\bin\setenv.bat" "%DDKROOT%" fre %BUILD_ARCH% %BUILD_TARGET%
+if not errorlevel 1 goto :configured
+set "BUILD_ERROR=%ERRORLEVEL%"
+echo WDK setenv.bat failed with exit code %BUILD_ERROR%. 1>&2
+exit /b %BUILD_ERROR%
 
+:configured
 rem The checked-in makefile predates WDK 7.1. The environment aliases below
 rem let it consume the compiler, headers and libraries selected by SetEnv.
 set "BASEDIR=%BASEDIR%"
@@ -29,11 +34,12 @@ set "NO_BUILD_CMD=1"
 
 pushd driver
 nmake /nologo /f idedma.mak CFG="UniATA - Win32 Release" ARCH=%BUILD_ARCH% /A
-if errorlevel 1 (
-  set "BUILD_ERROR=%errorlevel%"
-  popd
-  exit /b %BUILD_ERROR%
-)
+if not errorlevel 1 goto :built
+set "BUILD_ERROR=%ERRORLEVEL%"
+popd
+exit /b %BUILD_ERROR%
+
+:built
 popd
 
 set "OUTPUT_DIR=driver\Release"
