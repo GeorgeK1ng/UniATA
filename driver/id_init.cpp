@@ -1079,8 +1079,8 @@ for_ugly_chips:
                 KdPrint2((PRINT_PREFIX "UniataChipDetect: BAR5 %x\n", /*deviceExtension->*/BaseMemAddress));
                 if(ChipFlags & VIABAR) {
 
-                    ULONG BaseIoAddressBM_0;
-                    ULONG BaseIo;
+                    ULONG_PTR BaseIoAddressBM_0;
+                    ULONG_PTR BaseIo;
 
                     KdPrint2((PRINT_PREFIX "UniataChipDetect: VIABAR\n"));
                     /*deviceExtension->*/BaseIoAddressBM_0 = /*(PIDE_BUSMASTER_REGISTERS)*/
