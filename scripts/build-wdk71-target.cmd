@@ -6,6 +6,10 @@ if not defined DDKROOT (
   echo DDKROOT is not set. 1>&2
   exit /b 2
 )
+if not "%DDKROOT: =%"=="%DDKROOT%" (
+  echo DDKROOT must not contain spaces because WDK 7.1 SetEnv cannot parse a quoted root path. 1>&2
+  exit /b 2
+)
 
 set "BUILD_ARCH=%~1"
 set "BUILD_TARGET=%~2"
@@ -18,7 +22,9 @@ exit /b 2
 
 :architecture_ok
 echo Configuring WDK at "%DDKROOT%" for %BUILD_ARCH% %BUILD_TARGET%...
-call "%DDKROOT%\bin\setenv.bat" "%DDKROOT%" fre %BUILD_ARCH% %BUILD_TARGET%
+rem WDK 7.1's legacy SetEnv parser does not remove quotes from its first
+rem argument. DDKROOT is installed at a space-free path, so pass it unquoted.
+call "%DDKROOT%\bin\setenv.bat" %DDKROOT% fre %BUILD_ARCH% %BUILD_TARGET%
 if not errorlevel 1 goto :configured
 set "BUILD_ERROR=%ERRORLEVEL%"
 echo WDK setenv.bat failed with exit code %BUILD_ERROR%. 1>&2
