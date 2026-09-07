@@ -1,0 +1,1502 @@
+*) minor change
+o) optimization
++) feature added
+-) something removed
+!) fix
+!!) critical fix
+i) info
+e) experimantal
+
+
+--
+2012.07.26 - v0.42c
+
++) added code for ATAPI BUSY wait auto-adjustment. We poll and measure
+BUSY-after-Interrupt delay. Next time we use this value to defere interrupt service
+instead of polling.
+
+--
+2012.07.26 - v0.42c1
+
+!) undone newer FreeBSD changes in Intel UDMA setup. Caused significant performance degrade on ATAPI.
+
+--
+2012.07.27 - v0.42d
+
+!) fixed bug with setting ATAPI flag in AHCI IO flags for non-packet commands on ATAPI devices.
+
+--
+2012.07.27 - v0.42d1
+
+!) fixed drive size reporting bug for CHS-only hardware. Was reported as 0,
+since UserAddresableBlocks is not valid.
+
+--
+2012.07.27 - v0.42d2
+
+!!) fixed bug with concurrent use of InternalSrb by ATAPI internal requests and AHCI internal requests.
+Added AhciInternalSrb.
+
+--
+2012.07.28 - v0.42d3
+
+!) added code for handling ATAPI on AHCI those generate interrupt,
+but do not clear BUSY and do not affect any bit in channel IS register.
+We should treat such case as in Native/Legacy ATA mode - just wait for BUSY release.
+*) optimized Interrupt disable/enable case in AHCI branch of AtapiDmaReinit() and AtaSetTransferMode()
+We shall not touch IE registers if no operaion is required.
+
+--
+2012.07.29 - v0.42d4
+
+*) added logs to AHCI ATAPI pre-ready state checks.
+!) fixed code for ATAPI BUSY wait auto-adjustment. Delay time was not stored in LunExt properly
++) added internal glabal option MaxIsrWait, which determines ATAPI BUSY wait threshold.
+If expected delay is above MaxIsrWait, interrupt service shall be immediately posted to DPC.
+It is defaulted to 40us for real hardware and to 200us for VBOX.
+Previously shreshold was hardcoded.
+
+--
+2012.07.29 - v0.42d5
+
++) added chglog.txt
++) added ATA_REQ.ahci field to store error status observed in UniataAhciEndTransaction()
+*) added logs to  UniataAhciEndTransaction() to study ATAPI completion in more details
+*) removed extra logs from AtapiCheckInterrupt__(), added in v0.42d4
+
+--
+2012.07.29 - v0.42d5
+
++) added registry key for MaxIsrWait
+
+
+--
+2012.07.30 - v0.42d6
+
++) added FBS AHCI register definition (not used now)
++) added IDENTIFY and COMMAND definitions from ATA/ATAPI Command Set 2
++) added SCSI ERASE10 command definition
+!) direct access to ATA Command register is replaced with call to AtaCommand() for
+AHCI compatibility
+*) added check for .Removable flag before sending SCSIOP_MEDIUM_REMOVAL
++) added ByteCount extraction from RFIS for ATAPI devices.
+
+--
+2012.07.30 - v0.42e
+
++) added MODE_SENSE6, Page CACHING support for HDDs
++) added more logs and fixed ByteCount extraction from RFIS for ATAPI devices.
+
+--
+2012.07.30 - v0.42e1
+
+*) added setting of DRIVE_SELECT to AHCI ATAPI branch in H2D setup
+
+--
+2012.07.31 - v0.42e2
+
++) added definition of H2D FIS structure
++) added definition of FIS types (codes)
+*) clarified definition (size) of ACMD block in IDE_AHCI_CMD and
+PFIS, RFIS, SDBFIS in IDE_AHCI_RCV_FIS
+*) defined constants for FIS filed offsets IDX_AHCI_i_Xxxx
+*) added setting of IDE_DC_A_4BIT to AHCI H2D FIS setup
+!) fixed bug with incorrect setting of high-order LBA bits in DriveSelect register for LBA48 commands
+(should be 0 since 24-31 bits are stored in BlockNumberExp)
+*) used UniataAhciWaitCommandReady() in ATAPI 'Special case' completion to wait for CI release.
+*) changed AHCI ready wait granularity to 200 us (was 1 ms) in UniataAhciWaitCommandReady()
+
+--
+2012.08.01 - v0.42e3
+
+*) added ACMD dump in UniataAhciBeginTransaction() for ATAPI debug
+*) removed (for DEBUG) AHCI prefetch on ATAPI
++) added SACT AHCI register update before CI
+*) removed unnecessary CMD register update in UniataAhciBeginTransaction(). ACT+CI is enough
+i) analyzed SeaBIOS code v1.7 (http://code.coreboot.org/p/seabios/source/tree/bf079e16f8b0d016eb09787c2aebda359c41391a/src/ahci.c)
+*) added ATA_AHCI_P_IX_INF flag to list of allowed interrupts
+*) removed unnecessary RtlZeroMemory before UniataAhciSetupFIS_H2D in AHCI ATAPI branch
+
+--
+2012.08.01 - v0.42e4
+
++) (test) DMA-only mode for AHCI ATAPI
+
+--
+2012.08.01 - v0.42f
+
+*) (test) DMA-only mode for AHCI ATAPI SCSIOP_REQUEST_SENSE
+!) added handling for error-related IS bits. We should restart AHCI engine on all error conditions.
+otherwise device comes into indetermined state.
+*) adapter max transfer rate is now displayed in atactl -a output
+
+--
+2012.08.02 - v0.42f1
+
+*) undone experimental changes with force DMA on AHCI ATAPI (will check later)
+*) AHCI abort sequence is moved to UniataAhciAbortOperation()
++) implemented error handling in AHCI StopXxx() calls
+*) added use of AHCI ACT register to WaitReady and internal SendCommand
+
+--
+2012.08.02 - v0.42f2
+
++) added support for v12 and v16 READ/WRITE/VERIFY SCSI command emulation.
+It extends addressable space to 64bits (v16)
+and gives supports for HDDs above 2Tb, they use more than 32bits for LBA.
+*) undone all operations with AHCI ACT register
+
+--
+2012.08.02 - v0.42g
+
+!) fixed bug with incorrect ATA_AHCI_CMD_WRITE setting in AHCI ATAPI branch.
++) added DMADIR bit support to ATAPI
+
+--
+2012.08.02 - v0.42g1
+
+*) (test again) DMA-only mode for AHCI and SATA ATAPI
+!) fixed command version specific LBA decoding in IdeReadWrite
+
+--
+2012.08.03 - v0.42g2
+
+*) fixes in LBA logging
+
+--
+2012.08.03 - v0.42g3
+
+*) reduced amount of logs in AtapiCheckRegValue()
+!) fixed bug with 0 number of luns (in log only) in AtapiSetupLunPtrs()
+*) added logs to find why on some ICHxxx debug version with attached debugger crashes
+on controller reset
+
+--
+2012.08.04 - v0.42g4
+
+*) added log to catch damaged Chan pointer in DeviceExtension (observed on Reset in Native/Legacy mode on ICHxxx)
+!) added handler for 'unexpected' ATAPI READY interrupt.
+*) added small delay after ATAPI PIO read, finished with BUSY status when all requested bytes are transferred.
+If BUSY is released, command is assumed to be completed, otherwise further processing is posted to DPC.
++) added SCSIOP_SERVICE_ACTION16/SCSIOP_SA_READ_CAPACITY16 support
+
+--
+2012.08.04 - v0.42g5
+
+*) added logs to catch damaged (zero-filled) CDB on AHCI ATAPI READ
+*) removed unnecessary FIS logs from UniataAhciEndTransaction()
+!) fixed bug with unconditional ERROR state on AHCI ATAPI with zero transfer.
+
+--
+2012.08.05 - v0.42g6
+
+*) SrbExtensionSize = sizeof(ATA_REQ) regardless of controller type (test)
+
+--
+2012.08.05 - v0.42g7
+
+*) ATA_AHCI_CMD_PREFETCH is used again (test)
+
+--
+2012.08.05 - v0.42h
+
+!) fixed bug with missed call to MapError for AHCI ATAPI
+!) fixed bug with reading error status from improper place in AHCI ATAPI branch
+
+--
+2012.08.06 - v0.42h1
+
+*) several fixes for making compilers happy
+
+--
+2012.08.07 - v0.42h2
+
+*) several fixes for making compilers happy
+!) clarified use of SRB_STATUS_DATA_OVERRUN in AHCI branch
+
+--
+2012.08.07 - v0.42i
+
+!) fixes for SATA TransferRate report/detect
+*) added auto-update of controller MaxTransferMode according to actual established SATA transfer rate.
+This is done for incorrectly claimed controllers,
++) added AHCI controller max. transfer rate detect.
+
+--
+2012.08.07 - v0.42i1
+
+*) several fixes for making compilers happy
+
+--
+2012.08.07 - v0.42i2
+
+!) fix for uninitialized DMA PRD in SATA ATAPI branch
+*) added more logs to find why on some ICHxxx debug version with attached debugger crashes
+on controller reset (chan pointer gets damaged)
+
+--
+2012.08.08 - v0.42i3
+
+!) fixes for SATA speed reporting and representation. Doesn't affect actual interface speed.
+!) added minimum buffer size check in UNIATA IOCTL. TODO: perform such check in each IOCTL branch.
+
+--
+2012.08.09 - v0.42i4
+
+*) minor update in AtapiSoftReset timings, need to fix problem with possible late BUSY after RESET.
+
+--
+2012.08.09 - v0.42j
+
+*) artificially broken to cause BusReset and find where chan pointer gets damaged
+
+--
+2012.08.09 - v0.42i5
+
+!) rewrittem code for SRB_STATUS_DATA_OVERRUN reporting. Now check is performed in single place
+on CompleteRequest.
+*) transfer mode reporting is updated
+
+--
+2012.08.09 - v0.42i6
+
++) added PhyMode to LunExt and GETMODE. This value reflects actual bus transfer rate. Is used by atactl.
+*) rewritten OrigTransferMode behavior. Now it exactly reports maximum supported by device transfer rate.
+*) Ident -> MaxTransferMode code is moved to atapi.h and commonly used in both uniata and atactl
+*) transfer rate definition constants are moved to atapi.h
+
+--
+2012.08.09 - v0.42i7
+
+*) added zero-filling of output buffer in atactl before calling IOCTL
+
+--
+2012.08.11 - v0.43
+
++) added buffer size check to all UniATA IOCTLs
+*) added channel info option to AdapterInfo IOCTL
+!) fixed bug with Physical/Logical channel numbering for Legacy controllers in
+AtapiChipInit()
+*) clarified HwRes check code (80-pin detection)
++) channel transfer mode reporting to atactl -lx for controllers those have physically different channels
+
+--
+2012.08.11 - v0.43a
+
+!) fixed bug with buffer overflow in AdapterInfo IOCTL
+!) removed via_cable80(), since it doesn't actually work
+!) fixed bug with wrong channel info offset in AdapterInfo IOCTL
+
+--
+2012.08.12 - v0.43a1
+
+!) fixed bugs with AdapterInfo IOCTL handling
++) experimental ATA_PASS_THROUGH handling for AHCI
+
+--
+2012.08.14 - v0.43b
+
++) added AHCI enable code for chipsets, those have GHC_AE disabled by default
++) added MSI reset workaround code.
+*) MaxTransferMode is now checked against channel-specific value
+instead of controller-specific one
+*) merged ICH7 related updates from FreerBSD, e.g. operations with 0x94 DWORD register
+and SATA BAR+0x0C DWORD register
+*) removed unnecessary I1CH flag, indicating single channel controllers
+
+--
+2012.08.16 - v0.43c
+
++) implemented SCSIOP_START_STOP_UNIT Immediate, StartStop flag and PowerCondition handling.
+ATA IDLE, SLEEP (power down) and STANDBY (stop spindel) commands are used.
+Device is returned from Sleep stete via HardReset
+PowerState variable is added to LunExt to track expected power state of the device.
+*) merged atactl compiler warning fixes from ReactOS (bug 7243)
+*) changed intel 40/80-pin cable check
+
+--
+2012.08.16 - v0.43c1
+
++) added AdvancedPowerMode registry option.
+0 - disable
+1 - min perf with standby
+0x80 - min perf. w/o standby
+0xfe - max performance (default)
++) added AcousticMgmt registry option
+0 - disable
+0x80 - min acoustic level
+0xfe - max performance (default)
++) added IDLE/STANDBY timer init
+Note: some devices have non-zero default timer value (used when timer is disabled).
+Value of 0xfd is recommended in such case (max. possible, between 8 and 12 hours, vendor spec.)
+
+--
+2012.08.17 - v0.43c2
+
+!) fixed bug with possible crash when chan pointer becomes NULL in AtapiStartIo.
+Happened when smartctl (from smartmontools) send IDENTIFY to non-existent or communication channel.
+!) fixed bug with improper device type check in ATA_PASS_THROUGH branch (checked for SATA instead of AHCI).
+This caused crash with smartctl
+!) fixed bug with 40/80-pin cable check on drives those do not report valid HwRes
+*) updates (clarification) of DriveNumber meaning in SMART/IDENTIFY IOCTLs
+
+--
+2012.08.18 - v0.43c3
+
+!) fixed bug with confused Active and Supported modes from IDENTIFY. Bug caused drive to be limited to BIOS-selected
+transfer rate instead of maxumum available.
+*) implemented adaptive algorithm of handling DriveNumber in SMART IOCTLs to make smartctl happy.
+When invalid PathId/TargetId comes, if adapter has only 1 channel is is treated as primary or secondary IDE.
+Otherwise valid PathId/TargetId required.
+Note: Due to design bug in DISK.SYS (it doesn't send PathId down for IOCTLs) management tools should
+open ScsiPort%d instead of PhysicalDrive%d when possible and send IOCTL to proper SCSI address.
+
+--
+2012.08.18 - v0.43c4
+
+*) implemented IDENTIFY checksum adjustment to make smartctl happy
++) added power management options to atactl
+o) completly rewritten and unified SCSI address extraction code in SMART IOCTLs
+
+--
+2012.08.18 - v0.43c5
+
+!) fixed bug with reference to uninitialized chan pointer in SCSI address extraction code in SMART IOCTLs
++) added new SMART IOCTLs to make smartctl happy (used for SCT):
+ IOCTL_SCSI_MINIPORT_ENABLE_DISABLE_AUTO_OFFLINE
+ IOCTL_SCSI_MINIPORT_READ_SMART_LOG
+ IOCTL_SCSI_MINIPORT_WRITE_SMART_LOG
++) buffer size check to SMART IOCTLs
+
+--
+2012.08.19 - v0.43c6
+
+*) AdvancedPowerMode and AcousticMgmt are defaulted to max power saving without standby
+!) added validation code for Intel IDE I/O Config Register 0x54.
+Older controllers do not use it to reflect cable type
+
+--
+2012.08.19 - v0.43d
+
+!) changed Intel DMA setup code in order to handle standard modes correctly (according to specs).
++) added special case for pseudo-UDMA3 setup on Intel PIIX4e
+
+--
+2012.08.20 - v0.43d1
+
+!) fixed bug in AHCI ATA registers dump (invalid bit shift for CylHigh)
+o) unified ATA registers dump code (used in SMART and ATA PASSTHROUGH).
++) added buffer size check to ATA PASSTHROUGH dump registers branch
++) added check for CDB16 support (via IDENTIFY) and for requested CdbLength
+o) extra (unexpected) data wait in AtapiSendCommand in replaced with call to 
+AtapiSuckDataPort2()
++) added MODE_SENSE MODE_PAGE_POWER_CONDITION
+
+--
+2012.08.23 - v0.43d2
+
+!) fixed bug with uninitialized chan->MaxTransferMode for VIA VT6421 PATA channel
+(was set to SA150 according to controller default)
+*) added logging of reported interrupt info in UniataFindBusMasterController()
+*) allowed 64-bit physical addresses for controllers with AHCI 64-bit support (experimental)
+
+--
+2012.08.25 - v0.43d3
+
+!) fixed bug with device addressing for SMART/IDENTIFY on AHCI
+
+--
+2012.08.25 - v0.43d4
+
+!) fixed uninitialized MemIo in UniataAhciDetect()
+*) pre-initialized 'status' in IdeSendCommand() to make compiler happy,
+other similar minor changes
+e) AltInit is not issued if HwInitialize() is called in context of ScsiPortInitialize() and we are sure about
+detect status under w2k+
+
+--
+2012.08.26 - v0.43e
+
+*) InterruptMode is set explicitly to LevelSensetive for PCI controllers (since LevelSensetive == 0, 
+was used by default)
+e) BM range for MasterDev (Legacy) controllres in not reported to ScsiPort via ConfigInfo
+*) adjusted setting of ConfigInfo options according to actual needs
+
+--
+2012.08.26 - v0.43e1
+
+e) BM range for MasterDev (Legacy) controllres in not reported to ScsiPort via ConfigInfo
+(fixed, didn't work)
+*) logged PCI devices using 14 and 15 IRQ (conflicting with ISA ATA)
+
+--
+2012.08.27 - v0.43e2
+
+*) fixed PIIX3/PIIX4 device names
+*) in XP .INFs %12% is replaced with %10%\System32\drivers, this fixes problem with 'Invalid INF section'
++) added uata_comm.inf for UniATA virtual communication port
+
+--
+2012.08.28 - v0.43e3
+
+e) Legacy IDE IO ports are now queried from Isa bus. PCIBus was used before.
+*) atactl can now display device info even if ATA/ATAPI identify failed, SCSI INQUIRY is used instead.
+
+--
+2012.08.29 - v0.43e4
+
++) added SCSIOP_REPORT_LUNS support for newer OSes
+e) uncommented code for  fake controller to PCI part of Legacy IDE
+This is done to prevent system and/or other drivers from deinitializing
+PCI part of Legacy IDE
+(hangs)
+
+--
+2012.08.29 - v0.43e5
+
+e) fake BM controller is inited with 1 bus and 1 lun (was all zeros)
+*) PCI IO enable code is moved to separate function since it is used in multiple places
+
+--
+2012.08.29 - v0.43e6
+
+!) fix in device identification for fake PCI BM
+
+--
+2012.08.29 - v0.43e7
+
+e) temporary disabled call to UniataEnableIoPCI() on Fake claim
+(fails)
+
+--
+2012.08.29 - v0.43e8
+
+e) disabled Fake claim again
+
+--
+2012.08.29 - v0.43e9
+
+e) re-enabled Fake claim
+e) used NULL HwInterrupt
+(fails)
+
+--
+2012.08.29 - v0.43f
+
+*) removed Fake claim
++) added UniataEnableIoPCI() to AtapiChipInit() in global branch for w2k+
+
+--
+2012.08.30 - v0.43f1
+
+e) added UniataClaimLegacyPCIIDE() to claim Legacy PCI IDE with 
+HalAssignSlotResources
+(fails)
+*) SCSIOP_REPORT_LUNS is emulated for HDD only
+
+--
+2012.08.30 - v0.43f2
+
+!) added UniataClaimLegacyPCIIDE() is called BEFORE attempts to init Isa+PCI
+it works
+!) BM IO ranges are no longer reported with ISA parts.
+TODO: check if Fake claim works if called before ISA.
+
+--
+2012.08.30 - v0.43f3
+
+e) check if Fake claim works if called before ISA.
+(doesn't work, Scsiport returns STATUS_DEVICE_DOES_NOT_EXIST)
+
+--
+2012.08.31 - v0.43f4
+
+!!) reverted to UniataClaimLegacyPCIIDE(), this fixes resource conflict with other PCIIDE drivers
+
+--
+2012.08.31 - v0.43f5
+
+!) fixed uata_comm.inf, now it works
+*) if PCI part cannot be acquired, controller is initialized in legacy ISA way without DMA
+
+--
+2012.09.18 - v0.44
+
+!) fixed LogToDisplay by KtP
+*) changed VendorString definition to make newer compilers and cove checkers happy
+*) made an attempt to change .mak file and fix build problems after clean or build errors
+
+--
+2012.09.20 - v0.44a
+
+!) UniataEnableIoPci doesn't touch PCI Command reg. if it is not necessary (no update required),
+because on some systems (e.g. some ICH7) may produce interrupt storm.
+
+--
+2012.09.22 - v0.44b
+
+*) fixed bug with access to non-existent Lun in interrupt cleaning on init in PROBE_ON_INIT branch
++) added interrupt cleaning code for !PROBE_ON_INIT branch
++) added ICH7-specific SATA register access
+
+--
+2012.09.24 - v0.44b1
+
+!) fixed .mak file (.res rebuild)
+*) experimental fix for SATA ATAPI, those do not interrupt after DMA packet command error
+(check for error immediately after sending packet)
+
+--
+2012.09.24 - v0.44b2
+
+*) experimental fix for SATA ATAPI, check for DRQ (appeared, it is not asserted on error)
+
+--
+2012.09.25 - v0.44b3
+
+*) removed experimental DMA-only mode for SATA ATAPI. Some devices hangs.
+
+--
+2012.10.06 - v0.44b4
+
+*) fixed DMA->PIO condition in AtapiDmaInit() for non-AHCI SATA devices (was never switched)
+
+--
+2012.12.26 - v0.44c
+
+*) added more logs in AtapiSendCommand() to study error conditions after
+previous cmd execution failure. Now next command also treated as failed under VPC
+since ERR bit and Error Code is not cleared after PACKET command
+*) added call to BuildRequestSenseSrb() after immediately failed ATAPI command,
+I hope this will clear error status properly.
+
+--
+2012.12.28 - v0.44c1
+
+!) fixed IDE interrupt reason processing bug. Appeared due to mistake during replacement of
+numeric values with constants.
+
+
+--
+2012.12.29 - v0.44c2
+
+!) added INF patches by Gerhard Wiesinger, should fix problems with paths to binaries during setup.
+
+--
+2012.12.30 - v0.44c3
+
+*) implemented smart BUSY up/down wait algorithm in AtapiSoftReset().
+It should avoid unnecessary 1 second delay.
+
+--
+2013.03.20 - v0.44c4
+
+!) fixed bug with incorrectly (-1) initialized deviceExtension->MaxTransferMode
+in UniataChipDetect() for SIS 961
+!) fix candidate for unhandled Write PIO completion. Counters were not updated, this caused
+'incomplete transfer' condition and unnecessary endless retry attempts.
+
+--
+2013.03.20 - v0.44d
+
+*) warning fixes
+
+--
+2013.04.05 - v0.44e
+
+*) warning fixes in atactl, PHAR -> PCCH
++) added experimental BIOS handoff (BOH) support
+
+--
+2014.03.02 - v0.45
+
+*) added DevIDs for newer ATI IPX700/800, Hudson-2 controllers, default 
+them to SATA (non-AHCI) mode
++) added (experimental) PATA/SATA and AHCI detection code for newer ATI 
+IPX700/800,
++) added nVidia AHCI controllers, default them to SATA (non-AHCI) mode
+*) added more PATA Marvell chips
+
+--
+2014.03.08 - v0.45a
+
+*) added "SIS 0183" controller
+!) fixed handler for SIS 018x SATA controllers without BAR4
+
+--
+2014.03.08 - v0.45a1
+
+*) added "SIS 1182" and "SIS 1183" controllers
+
+--
+2014.03.09 - v0.45a2
+
+!) removed duplicates and wrong values from device list
+*) unified OS-specific INFs
+e) AHCI support is enabled in INFs by default
+*) SIS ATA controllers are listed in bm_list.h in order to be listed in INF
+*) listed VIA AHCI as supported
+!) fixed DevID for RZ 100x
+!) added handler for uninitialized BAR4 for all SATA chips
++) added new Promise chips
++) added channel number adjustment for Promise PATA
+e) partially added Promise SATA support
+*) added handler for 0 dma_count
+e) improved AHCI error handler. Do not retry after interface errors
+
+--
+2014.03.11 - v0.45a3
+
+!) fixed bug with not updated uniata_ver.h when VER is specified
+*) added more logs in and around AtapiVirtToPhysAddr_()
+
+--
+2014.05.21 - v0.45a4
+
+!) fixed bug with PCI device revision for UDMA-5 "SiS 630S" (improper detection)
+
+--
+2014.05.21 - v0.45a5
+
+*) added "SiS 962" and "SiS 963" to list of known devices,
+   programming specific flags are properly set for them.
+*) added more logs for flags and word-count in ISR
+
+--
+2014.08.05 - v0.45a6
+
+e) ATAPI commands READ_CD and READ_CD_MFS are marked as DMA-capable.
+   Managed by registry option AtapiDmaRawRead.
+
+--
+2014.08.11 - v0.45a7
+
+*) Added workaround for "Marvell 9123" detection of AHCI channels.
+   Chip reports 8 while it actually has 4.
+*) added more logs for SSD and AHCI channel detection.
+
+--
+2014.08.13 - v0.45a8
+
+!) do not touch unimplemented AHCI channels in AtapiResetController()
+*) added logging to UniataAhciChanImplemented()
+
+--
+2014.09.06 - v0.45b
+
+!) fixed bug with missed AtaReq->WordsTransfered adjustment in IDE PIO Write branch in IdeReadWrite()
+!e) added handler for raised DRQ immediately after PIO read, seems we should try to read rest of data.
+see ReactOS BUG-8280
+
+--
+2014.09.16 - v0.45b1
+
+!e) changed Promise UDMA2+ programming sequence according to Linux sources.
+Should fix problem with high transfer rates.
+see ReactOS BUG-8280
+
+--
+2014.10.17 - v0.45c
+
+!) Added check for valid BM status register on Intel chips in VBOX environment those report
+'compatible' mode via 0x90 PCI reg. This is needed to workaround problem with
+AHCI-enabled controller without properly set 0x90.
+see ReactOS BUG-7020
+
+!) Added LUN 1->2 reallocation in case of fall-back to 'compatible' mode on Intel chips
+according to 0x90 PCI reg.
+see ReactOS BUG-7020
+
+--
+2014.10.20 - v0.45c1
+
+!) fixed bug with ATA-style code without AHCI branch in AtapiEnableInterrupts() when we are in
+recursive disable state.
+see ReactOS BUG-7020
+
+--
+2014.10.23 - v0.45d
+
+e) added experimental registry option Force80Pin to workaround controllers with broken 80-pin detection
+
+--
+2014.10.29 - v0.45d1
+
+!) Fixed bug in option Force80Pin handling for Intel chips
+!) Fixed bug in DMA timing for ICH4 chips. Due to wrong programming we got assymetric transfer r/w rate
+in UDMA 5 - 80/16 Mb/s
+
+--
+2014.10.30 - v0.45e
+
+e) Added handling of "Exclude" option for separate channels for Compatible controllers
+e) Added handling of "Exclude" option for AHCI channels
+e) Partially added handling of "Exclude" option for ATA/SATA controllers (affects only total number
+of channels according to resulting port bitmap).
+e) Added "PortMask" option for AHCI channels and partially for SATA (like "Exclude").
+This option can reduce available cannels.
+e) Added "NumberChannels" option for SATA, this option can only reduce available cannels.
+i) works on nVidia SATA MCP51 PATA/SATA
+
+--
+2015.02.08 - v0.45f, v0.45f1
+
+*) Added logging of IR status for ATAPI
+
+--
+2015.02.08 - v0.45f2
+
+*) Added logging of WordCount status and interrupt processing points for ATAPI
+e) Added AtapiSoftReset() on ATAPI errors if device reports wrong/unexpected 
+state
+
+--
+2015.02.08 - v0.45f3
+
+e) Added UniataSataClearErr() on ATAPI errors and controller reset
+e) Added extra wait for ready delay for SATA ATAPI reporting wrong device 
+state after reset
+!) perform generic device reset for nVidia SATA controllers if device 
+reports valid state. Previously, reset was never performed for SATA nVidia.
+
+--
+2015.02.09 - v0.45f4
+
+e) Added UniataSataPhyEnable() with reset option for NVIDIA SATA controller reset
+!) fixed logical bug in nVidia device reset branch (still was never called)
+
+--
+2015.02.10 - v0.45f5
+
+e) Added experimental Phy interrupt masking code for NVIDIA SATA during controller reset
+
+--
+2015.02.17 - v0.45f6
+
+!) another experimental Phy interrupt masking code for NVIDIA SATA
+e) added experimental workaround for the case when the controller is fast enough to
+assert IRQ between sending PACKET command and GetBaseStatus().
+We catch ATAPI interrupt with specific status (DRQ+IDLE, 0 WordCount, Write 
+interrupt reason when Read is expected) and just continue execution.
+In general, we should mask interrupts around PACKET command and  
+sending the packet itself, but on virtal machines it definitly cause loss of
+Data interrupt. Also, there is no problem on old uni- and dual-core systems.
+I don't know if this problem is related to number of CPU cores or to overal 
+system performance. 
+Interrupt masking behavior is managed by AtapiSendDisableIntr registry 
+option and is defaulted to FALSE
+ROS BUG-9119
+
+--
+2015.02.18 - v0.45f7
+
+e) removed ATAPI state workaround from v0.45f6 (doesn't help, no interrupt appeared)
+e) try to force read data from ATAPI device on 'strange' condition
+
+--
+2015.02.18 - v0.45f8
+
+e) try to wait for WordCount in DPC (ROS BUG-9119)
+
+--
+2015.02.18 - v0.45f9
+
+e) force SATA ATAPI to send Packet in ISR (ROS BUG-9119)
+
+--
+2015.02.18 - v0.45f10
+
+e) roll-back to v0.45f7
+e) do not use AtaSetTransferMode() for SATA ATAPI devices
+according to Linux ata drivers (ROS BUG-9119)
+e) try blind reading data for ATAPI if no WordCount reported
+
+--
+2015.02.19 - v0.45f11
+
+e) revert usage of AtaSetTransferMode() for SATA ATAPI devices.
+Problem with zero wordCount persists, but we get PIO timing problem.
+!) force read data from ATAPI device on 'strange' (zero wordCount, but raised DRQ)
+condition seems to work properly
+ROS BUG-9119
+
+--
+2015.02.19 - v0.45g
+
+!) added check for ATAPI if IDE identify fails (some devices doesn't report
+ATAPI signature in wrong internal states)
+ROS BUG-9119
+
+--
+2015.02.22 - v0.45g1
+
+!) added check for Legacy ISA I/O ranges on non-MasterDev PCI controllers
+to avoid further conflict with ISA detection code (such condition was detected on QEmu)
+e) added check for valid value of DriveSelect register on SATA controllers 
+w/o SATA regs. QEmu ignores DriveSelect and reports clone of Master on 
+Slave.
+!) added delay between read cycles in AtapiSuckPort2() and 
+AtapiSuckPortBuffer2() to avoid condition when DRQ is not raised again immediately 
+after read.
+
+--
+2015.02.22 - v0.45g2
+
+!) AtapiSuckPort2() is not called automatically if AtapiSuckDataPort2() get 
+less data than expected. Rest of data may come later.
+ROS BUG-9119
+
+--
+2015.02.22 - v0.45g3
+
+!) added workaround for lost value of ConfigInfo->AtdiskSecondaryClaimed
+under ReactOS and not detected resource conflict in ScsiPortGetDeviceBase()
+QEmu expose disk controller as both PCI SATA and ISA IDE.
+We should not try ISA detect if PCI succeed with same I/O range
+!) fix for AtapiSuckPort2() in AtapiSuckPortBuffer(). Rest of data may come later.
+
+--
+2015.02.23 - v0.45g4
+
+e) added setting of IDX_AHCI_P_CMD in UniataAhciBeginTransaction() along 
+with CI, probably we need this for VBox only
++) added read from AHCI registers after write to initiate flush (from Linux)
+
+--
+2015.02.23 - v0.45g5
+
+*) undone setting of IDX_AHCI_P_CMD in UniataAhciBeginTransaction() along 
+with CI. It doesn't help, interrupt is lost due to some other reason.
+e) used long wait for Drq in AtapiSuckPortBuffer(), short is not enough.
+We can't defer reading because no more interrupts will be generated and 
+because BUSY is not set while some data is still expected.
+
+--
+2015.02.24 - v0.45h
+
++) added Cyrix 5510/5520 support from Linux code
+
+--
+2015.02.24 - v0.45h1
+
++) added Cyrix 5530 and 5535 support from Linux code
++) added handler for BusReset condition after SCSIOP_MECHANISM_STATUS
+Now driver sets DFLAGS_CHANGER_INITED in this case to prevent automatic use
+of unsupported command.
+
+--
+2015.04.06 - v0.45h2
+
+!) setting of IDX_AHCI_P_CMD in UniataAhciBeginTransaction() along 
+with CI is removed again. According to specs both these actions will
+start command. According to VBox logs command is executed twice.
+Interrupt loss is really caused by some other reason, but this but should be 
+fixed anyway.
+
+--
+2015.04.06 - v0.45h3
+
+!) added AtapiWaitForDrq() in ATAPI interrupt handler.
+Looks like it may be raised with delay (e.g. in QEmu)
+
+--
+2015.04.06 - v0.45h4
+
+!) fixed bug with missing REQ_FLAG_DMA_OPERATION on succefull 
+reinit in AtapiDmaSetup(). This prevented fallback to UDMA2 when higher 
+modes doesn't work fine.
+
+--
+2015.04.07 - v0.45h5
+
+*) minor log updates
+
+--
+2015.09.22 - v0.45h6
+
++) added BOCHS detection
+o) implemented quick device absence detection for BOCHS (0x00 status)
+!) unified IORES structure init via UniataInitIoRes() and UniataInitIoResEx()
+this affects problem with ReactOS boot under BOCHS (BUG 10176)
+e!) IORES->Proc check in IO routines replaced with ASSERT()
+also affets ReactOS BUG 10176
+!) fixed bug with missing reinit dma after device reset and initial 
+detection.
+!) added IO size alignment check before 32-bit PIO operations
+!) fixed bug with Intel timings (secondary channel)
+
+--
+2015.09.23 - v0.45h7
+
+e) added optimization to avoid unnecessary IO with unsupported/missing
+PCI devices on 2nd and 3rd scan passes.
+
+--
+2015.09.23 - v0.45h8
+
++) sync with ReactOS repository
+eo) handle PRD and IO-buff double-buffering before sending CMD to device.
+Copying is moved from AtapiDmaStar() to AtapiDmaDBPreSync()
+e) #pragma pack(1) is used for BusMaster structures in 'bsmaster.h'
+
+--
+2015.09.23 - v0.45h9
+
+!) #pragma pack() is used in all uniata headers to avoid cross-environemnt 
+ambiguities (this was the root of the problem)
+
+--
+2015.09.23 - v0.45h10
+
+*) merged IORES-related logging from parallel branch (39k forked from 39j)
+e!) fixed PCI bus scanning algorithm (it could stop after 1st pass even if 
+some devices are detected)
+
+--
+2015.09.24 - v0.45i
+
+o) implemented quick device absence detection for all types of VM (0x00 status)
+o) stop detection process in IssueIdentify if after IDENTIFY command still reports 0x00 
+status.
+
+--
+2015.09.25 - v0.45i1
+
+*) added more logs to IssueIdentify
+!) removed unhandled ATA_DMA attempt from Promice init code.
+e) temporary (for test only) removed HDD cache/acoustic/etc tuning (ROS 
+BUG-8280)
++) HDD tuning checks Capability flags
+
+--
+2015.09.27 - v0.45i2
+
+*) added more logs to IssueIdentify (Security status)
+e) reverted HDD cache/acoustic/etc tuning (see 0.45i1)
+e) error/retry context is preserved after bus-reset and new attempts
+should be performed with lower transfer rate like after regular error 
+condition. This affects IDE Read/Write operations only.
+
+--
+2015.09.29 - v0.45i3
+
+*) added more logs to IssueIdentify capabilities (IORDY, SoftReset)
+e) used Linux code for Promise DMA init instead of FreeBSD
+!) fixed bug with unnecessary ExcludeFromSelect option in NT4 .INF
+
+--
+2015.10.06 - v0.45j
+
+!) Fall back to BM mode for Intel AHCI-capable chips w/o AccessRanges[5]
+
+--
+2015.10.06 - v0.45j1
+
+!) Fall back to BM mode for all AHCI-capable chips w/o AccessRanges[5]
+
+--
+2016.01.18 - v0.45j2
+
+e) detect wrong Bochs ATA DMA behavior. Versions prior to 2.6.8 expect 
+ATA_DMA_READ *after* DMA start, however BM DMA specs declare opposite order.
+CTRFLAGS_DMA_BEFORE_R flag is introduced in order to manage this.
+(ROS BUG-6774)
+
+--
+2016.01.24 - v0.45j3
+
+e) more logs for detect wrong Bochs ATA DMA behavior. (ROS BUG-6774)
+
+--
+2016.01.24 - v0.45j4
+
+e) use CTRFLAGS_DMA_OPERATION instead of CTRFLAGS_DMA_ACTIVE in workaround condition
+(ROS BUG-6774)
+
+--
+2016.01.24 - v0.45j5
+
+!) fixed bug with missing AtapiDmaStart() on HDD Read in IdeReadWrite()
+i) hangs on nVidia MCP51 (not sure that since this version)
+
+--
+2016.03.05 - v0.45j6
+
+e) try use CTRFLAGS_DMA_BEFORE_R for ATAPI too
+!) move CTRFLAGS_DMA_BEFORE_R to global g_opt_BochDmaReadWorkaround
+e) do not use DMA on ATAPI under Bochs
+(ROS BUG-6774)
+!) fixed bug with completly cleared ChannelCtrlFlags on bus reset. Permanent 
+bits are masked with CTRFLAGS_PERMANENT
+
+--
+2016.03.06 - v0.45j7
+
+!) use g_opt_AtapiNoDma = TRUE for Bochs by default (ROS BUG-6774)
+e) try use g_opt_BochDmaReadWorkaround for both Read and Write operations
+(ROS BUG-6774)
+
+--
+2016.03.07 - v0.45j8
+
+e) do not use g_opt_BochDmaReadWorkaround for Write operations
+since DMA Start before ATA WRITE cause Boch DMA command abort immediately 
+after DMA Start w/o any error reports after ATA WRITE.
+!) Fixed bug in DMA Start / ATA WRITE sequence (missing DMA Start) for Bochs 
+in workaround mode
+
+See ROS BUG-6774
+
+--
+2016.03.07 - v0.45j9
+
+eo) try use DWORD-IO for ATAPI
+
+--
+2016.03.07 - v0.45j10
+
+*) added extra Bochs detection via ATA device S/N and FW (it is possible
+to meet no Boch VendorId on PCI bus)
+and absence of non-zero SubDevice/SubVendor on Intel chipsets
++) Added old PIIX DMA support
+
+--
+2016.03.08 - v0.46
+
+!) Fixed bug with PIO multiblock transfer (wordCount was not updated on each 
+iteration), which may cause buffer overflow
+!) Fixed bug with uninitialized max_bcount on PIO transfers on LBA-enabled devices,
+which could cause unnecessary request fragmentation in PIO mode.
+e) do not try automatically initialize CD-changers, since it may cause
+ATAPI CD-ROM freeze. Let CD-ROM driver do it itself for its own risk (and 
+knowledge). We shall jusy parse output on success.
+Original changer behavior can be reverted by UNIATA_INIT_CHANGERS define.
+(ROS BUG-9119)
+-) removed unnecessary calls of AtapiHwInitializeChanger()
++) track last used Lun on the channel chan->last_cdev
+
+--
+2016.03.09 - v0.46a
+
+*) fixed KeNumberProcessors ROS/NT DDK incompatibility issue
+*) fixed g_opt_BochDmaReadWorkaround variable name (use 'Bochs')
+*) fixed DBG vs _DEBUG ROS compilation issue
+!) check for DRQ is taken back. However, it is not always asserted on 
+error (v0.44b2), problem reported by RayeR
+
+--
+2016.03.09 - v0.46a1
+
+e) force PIO on SATA ATAPI (experiment for Pioneer, ROS BUG-9119)
+
+--
+2016.03.12 - v0.46a2
+
+e!) check ATAPI status (iReason) for CoD bit set before sending packet 
+command and wait for it (experiment for Pioneer, ROS BUG-9119)
+*) added logging of DMADirRequired bit from ATAPI Identify
+
+--
+2016.03.12 - v0.46a3
+
+!) IDE_STATUS_INDEX is excluded from Status vs AltStatus verification on 
+ISA, extra log added
+
+--
+2016.03.13 - v0.46a4
+
+!) IDE_STATUS_INDEX is excluded from StatusByte DRQ/Ready condition checks
+o) rewritten DRQ+CoD wait for ATAPI after ATA_PACKET command (ROS BUG-9119)
+
+--
+2016.03.14 - v0.46a5
+
+e) change ATAPI regs setting order
+e) add DriveSelect + IDE_USE_LBA for ATAPI
+e) set ByteCount regs to 0 for ATAPI DMA
+
+--
+2016.03.14 - v0.46a6
+
+e) allow DMA for short/unaligned data blocks for SATA ATAPI (ROS BUG-9119)
+
+--
+2016.03.14 - v0.46a7
+
+*) reverted to normal values of ByteCount regs on ATAPI DMA (ROS BUG-9119)
+*) updated IDENTIFY structure according to ATA8-d2015r2-ATAATAPI
+o) unified ATAPI regs setting code
+*) added Error reg logging if DRQ+CoD never comes (ROS BUG-9119)
+
+--
+2016.03.14 - v0.46a8
+
+e) added 16-byte alignment check for ATAPI DMA transfers
+e) added zero-filling of 'unused' ATAPI regs
+e) DRQ+CoD timeout is set to 1 sec
+e) defer ATAPI command packet sending to ISR for SATA ATAPI
+e) log port claiming operations on ISA init (we have problem with floppy.sys 
+on ISA, reported by KtP)
++) added IoRange cleanup on ISA init
+
+--
+2016.03.17 - v0.46b
+
+-) removed experimental changes for ROS BUG-9119:
+long DRQ+CoD delay, omited PIO/DMA setup for SATA ATAPI, forced DMA mode
+i) all actual improvements and bugfixes from v0.46ax are preserved
+-) removed extra AtaSetTransferMode() call in AMD/NVidia/VIA PIO setup
+!) VIA-specific PIO setup is now conditional in AMD/NVidia/VIA code
+!) fixed IO-range cleanup on unsuccessfull ISA detection attempt
+!) fixed out-or-range cleanup attempt on ISA detect (buffer overflow with 
+possible crash later)
+
+--
+2016.03.19 - v0.46b1
+
++) wait 1us for BUSY raise after write command registers on "old" ISA 
+systems. Original ATAPI.SYS does this.
++) use long timeout 2s on hard reset after unsuccessfull soft reset on 
+detect phase on "old" ISA systems. Original ATAPI.SYS does this.
+*) do not enumerate PCI bus if both IgnoreIsaCompatiblePci and 
+IgnoreNativePci options are set.
+*) fixed several 'prefast' warnings
+
+--
+2016.03.19 - v0.46b2
+
+!!) use ATA_IOSIZE and ATA_ALTIOSIZE for I/O range length in ISA detect part.
+Note, that historically used value of 2 for AltStatus range is definitly 
+wrong. There must be 1. The ambiguity comes from rudimentary definition of
+IDE_REGISTERS_2 with unused DriveAddress member
+e) do not report 0x3f6 register usage on old ISA hardware to avoid 
+interference with Floppy. However, it should use only 0x3f0-3f5,3f7
++) track last selected device via chan->last_devsel to avoid unnecessary
+I/O and possible wait for ready delay.
+Move SelectDrive() from macro to function.
+Create AtapiHardReset() for channel hard reset and related operations
+
+--
+2016.03.20 - v0.46b3
+
+-) removed extra delays, appeared in 0.46b1, 0.46b2
++) added tunable delay in SelectDrive() after write to register
+e) try report 0x3f6 register usage even on old ISA
+!) fix bug with blocked UniataEnumBusMasterController() call
+!) declare IDE_REGISTERS_2 as union and use DriveAddress
+(which is now aliased with AltStatus) as Control register
+i) UniataClaimLegacyPCIIDE() doesn't work on NT4 SMP (by KtP)
+CSB5 device has ISA ports exposed via PCI BARs 0-3
+
+--
+2016.03.20 - v0.46b4
+
+!) fixed bug with sending packet command in ISR. This didn't happen on SATA
+because of error in code unification in v0.46a8
+!) clarified AtaSetTransferMode() behavior for SATA devices. When device is
+switched from PIO to SATA_xxx mode, use highest UDMA mode from Identify 
+data.
+e) use PIO0_TIMING delay between comamnd packet bytes when deal to ATAPI
+(ROS BUG-9119)
+
+--
+2016.03.20 - v0.46b5
+
+!-) removed unnecessary ExFreePool() from UniataClaimLegacyPCIIDE() because 
+buffer is deallocated inside HalAssignSlotResources()
+!) do not report 0x3f6 register usage on old ISA, even with correct 1-byte 
+range length
+e) do not call UniataClaimLegacyPCIIDE() if ISA ranges are exposed via PCI 
+BARs 0-3
+
+--
+2016.03.21 - v0.46b6
+
+!) according to newer FBSD/Linux code SiS chipset programming is not the 
+same as nVidia
+e) try to disable NVQ option use (code seems to be much more different for NCQ mode)
+and clear NVQ flag in HwFlags in oder to operate in old-style mode.
+This option affects interrupt management registers layout.
+i) according to Linux sources, NVQ mode should be specially enabled. 
+Otherwise use old-style mechanism.
+
+--
+2016.03.22 - v0.46b7
+
+e) try to continue init if UniataClaimLegacyPCIIDE() fails on SMP HAL under 
+NT3/4.
+i) Some NT3/4 SMP HALs cannot reallocate IO resources of BusMaster PCI controller
+Since nobody claimed PrimarySecondary yet, try init and claim them
+However it is not 100% safe way.
+!) fixed bug with DeviceID/VendorID in atactl output
+*) align DeviceID/VendorID length in atactl output
+!) fixed bug with ISA-on-PCI detect (used BMList[i] instead of newBMListPtr
+i) doesn't work (hangs) on MCP51 SATA/PATA
+
+--
+2016.03.22 - v0.46b8
+
+-) removed old nVidia updates related to ROS BUG-9119
+i) doesn't work (hangs) on MCP51 SATA/PATA
+
+--
+2016.03.22 - v0.46c
+
+i) roll-back to 45e
++) commit general updates and optimizations from 0.46b8
+expect nVidia-related, DriveSelect optimization, DWORD_IO,
+MECHANISM_STATUS, ATAPI iReason, error recovery context,
+ISA-related changes
+
+--
+2016.03.22 - v0.46c1
+
++) commit DriveSelect optimization
++) commit fix for set (U)DMA mode on SATA
+i) MCP51 SATA/PATA ok (UDMA2 ATAPI + SATA150 HDD)
+
+--
+2016.03.23 - v0.46c2
+
++) commit DWORD_IO
++) commit DMADir
++) commit new VIA timings
++) commit ISA-related changes (w/o PCI detect)
+
+--
+2016.03.23 - v0.46c3
+
++) commit MECHANISM_STATUS fix
+
+--
+2016.03.23 - v0.46c4
+
++) commit ISA-only fixes
+
+--
+2016.03.23 - v0.46c5
+
+!) fixed check for conflicting IO resources (ISA vs PCI).
+Also, the check is unified and performed in AtapiCheckIOInterference()
+In some cases we could touch PCI-allocated ISA (BusMaster) IO resources
+on pure ISA detect.
+*) AtapiFindController() is renamed to AtapiFindIsaController()
+
+--
+2016.03.25 - v0.46c6-8
+
+!) fixes in AtapiFindIsaController() scan algorithm
+
+--
+2016.03.25 - v0.46c9
+
++) commit SATA ATAPI-specific changes (ROS BUG-9119)
+
+--
+2016.03.25 - v0.46c10
+
++) commit new nVidia chipset setup
+i) we get back to 0.46b8 with Isa detect fixes and without very specific 
+ATAPI continue-PIO-read code
+i) MCP51 SATA/PATA ok (UDMA2 ATAPI + SATA150 HDD), Bochs ok
+
+--
+2016.03.25 - v0.46d
+
+e) prefer AltInit if UniataClaimLegacyPCIIDE() fails
+for CSB5 (see above, 0.46b3) and similar cases
+*) fixed dev/vendor logs
+--
+2016.03.25 - v0.46d1
+
+!) commited temporary commented resourceList allocation for 
+HalAssignSlotResources(). e.g. ICH4 fails PCI init on UP system.
+i) in general, resource use claiming should be completly rewritten.
+
+--
+2016.03.26 - v0.46d2
+
+!) always attempt to init Compatible controller if HalAssignSlotResources() fails
+and Primary/Secondary not claimed yet.
+This fixes problem with HALs other than default UP (hal.dll)
+
+--
+2016.03.27 - v0.46d3
+
+*) Use compact data structure BUSMASTER_CONTROLLER_INFORMATION_BASE for known 
+device list (just dev/vendor ID + flags). In user-mode and debug the structure 
+is extnded with device name pointer.
+Original BUSMASTER_CONTROLLER_INFORMATION is now used for list of detected 
+controllers only.
+This should reduce binary size and memory waste.
++) added build_atacmd.exe utility for prebuilding AtaCommandFlags[] and 
+AtaCommands48[] arrays. Now these tables are located in atacmd_map.h
+-) UniataInitAtaCommands() is removed
+
+--
+2016.03.29 - v0.46d4
+
+!) fixed bug with improper mode value in setting (U)DMA mode on SATA
+e-) try do not touch chipset/SATA registers on nVidia MCP51 (10de:0266)
+ROS BUG-9119
+e) try enable/disable interrupts in AtaSetTransferMode() for SMP systems.
+e) set g_opt_AtapiSendDisableIntr to TRUE on SMP systems.
+
+--
+2016.03.31 - v0.46d5
+
++) if we do not touch chipset/SATA registers on nVidia MCP51 (10de:0266)
+my notebook freezes on init (both UP/SMP modes)
+i) SMP still gets frozen in GUI
+
+--
+2016.04.02 - v0.46d6
+
++) read DWORD-aligned part of data using DwordIo and then unaligned part in regular 
+way.
+i) When ATAPI 64k PIO read is requested we may have 0xfffe byte 
+count reported for 0x10000 bytes in single interrupt.
+It is not allowed to read entire block with DwordIo intead of 
+wait for the last word.
+
+--
+2016.04.03 - v0.46d7
+
+!) device list BusMasterAdapters[] and command map AtaCommandFlags[],
+AtaCommands48[] are compiled in special stubs bm_devs.cpp and atacmd_map.cpp
+in order to avoid data duplicates in final binary.
+Also, this prevents ReactOS build errors.
+e+) added Windows 7 inf build
+
+--
+2016.04.05 - v0.46d8
+
+!) fixed .inf build process (2k/2k3 order of copying)
+-) removed w7 .inf build, 2k3 if fixed instestead
++) added build dependency for .inf
+i) in general, .inf and xxx_ver.h build process and dependencies must be 
+rewritten
+!) fixed bug with not reinitialized portBase and Irq on ISA bus scan.
+Only first value was used for all probes
++) added protection from invalid ISA registry setting. Both portBase and Irq 
+must be spefified for ISA channels. Otherwise registry settings are treated 
+as invalid and hard-coded defaults are used.
+i) SMP boot problem was caused by BIOS legacy USB keyboard emulation. This 
+option must be disabled for NT4/NT3.51
+
+--
+2016.06.28 - v0.46e
+
+i) We MUST register 2nd ISR for UP systems. This is needed for cases when 
+multichannel controller generate interrupt while we are still in its ISR for 
+other channle's interrupt. New interrupt must be detected and queued for 
+further processing. If we do not do this, system will not route this 
+interrupt to main ISR (since it is busy) and we shall get to infinite loop 
+looking for interrupt handler.
++) try to identify CrashDump case and tune init process according to this 
+environment.
+!) fixed 'control' register uninitialized case for I82371FB, ROS-11157
+!) fixed bug with buffer overflow when SCSIOP_READ_CAPACITY produce multiple 
+interrupts and we have wordCount truncated to 0, but 
+non-zero actual transfer length (previously read block) inside last ISR call.
+AtaReq->WordsTransfered must be used instead. See ROS-11296
+
+--
+2016.08.28 - v0.46e1
+
+!) fixed bug with wrong CrashDump mode condition check, which prevented 
+ATAPI detecton on regular init.
+
+--
+2017.01.06 - v0.46e2
+
+!) fixed bug with unitialized page table for valid memory addresses. We should 
+touch user buffer in AtapiVirtToPhysAddr_(). See ROS-11894
+
+--
+2017.04.07 - v0.46e3
+
+!) fixed bug with not handled 0-value of
+CurrentSectorsPerTrack/NumberOfCurrentHeads under PCem VM
+*)  added check for 0-value of SectorsPerTrack/NumberOfHeads
+
+--
+2017.12.11 - v0.46e4
+
+!) fixed bug with not "nVidia nForce MCP61 S2" (use generic interrupt check) 
+See ROS-11773
+*) write zero to IDX_IO2_o_Control before sending ATAPI command. See 
+ROS-11773
+
+--
+2017.12.17 - v0.46e5
+
+!) fixed bug with double memory allocation for under-4G buffer in 
+AtapiDmaAllocate() in AHCI mode
+See ROS-13988
+
+--
+2018.03.18 - v0.46e6
+
+e!) treat AHCI non-fatal condition on READ operations without error bits set
+as buffer underrun (INFS, ATA_AHCI_P_IX_INF)
+e) check for LBA32 writes on 2TB+ HDDs (cause data corruption), just write 
+to log now
+!) fix for Intel ICH9 (2921, 2926) compability flags (should be non-AHCI dual channel). 
+See ROS-13310
++) added JMicron dual-port support + SATA/PATA detect
+e) 80-pin detection is always issued at the end of AtapiChipInit() 
+regardless of controller SATA support flag since we may have mixed SATA/PATA 
+ports on the same controller
+
+--
+2018.03.22 - v0.46e7
+
+!) fix in JMicron dual-port support, do not try to update LUNs since they 
+are not initialized yet
+o) use pre-cached values of 0x40 and 0x80 regs on JMicron before general vs 
+channel-specific mode checks (thanks to Torsten K
+
+--
+2018.07.26 - v0.46e7x
+
++) adapted 
+https://github.com/reactos/reactos/pull/673/commits/4da824887556fa374a5b77cb3fdddc28d2e07f23
+64-bit patch (use ULONGIO_PTR, ULONG_PTR)
+
+--
+2019.01.21 - v0.46e8x
+
+e) AHCI v.1.3, v.1.3.1 are experimentally listed as supported (success)
+
+--
+2019.03.10 - v0.46e8
+
++) merged v0.46e7, v0.46e7x and v0.46e8x
+
+--
+2019.03.19 - v0.47
+
+!) fix for .mak files under Wine build enfironment 
+   if not exist "$(SomeDIR)/$(NULL)" 
+     must be changed to 
+    ....  "$(SomeDIR)" 
++) added a lot of AMD, Intel and Marvell AHCI chipsets, 
+e) added UNIATA_AHCI_ALT_SIG flag. Some AHCI returns signature in PSIG 
+   rather than FIS on soft reset
+!) call UniataExpectChannelInterrupt() in IdeVerify()
++) added ASMedia, ThunderX and Annapurna AHCI chips
+e) added workaround for AHCI chips those do not setup port mask. So enable 
+ports manually according to port count register
+!) fixed Win/Wine .mak path/dependence compatibility issues
+e) added UNIATA_RAID_CONTROLLER flag to RAID controllers. Note, UniATA 
+doesn't attach to RAIDs since SkipRaids option is set to 1 by default
++) added interface-type specific registry settings under PATA, SATA and AHCI 
+sub-hives of Parameters.
+
+2019.03.26 - v0.47a
+!) AtapiSetupLunPtrs() was not called after UniataAllocateLunExt() in Intel SATA/AHCI detect code, CORE-15886
+*) CR/LF -> CR in driver sources
+!) fix for (UNIATA_AHCI | UNIATA_AHCI) instead of (UNIATA_SATA | UNIATA_AHCI) in AtapiRegCheckDevValue()
+*) remove 0x prefix when printing AHCI version
+*) pcidump\head\driver\pcidump.h dependency is conditional. Local copy of pcidump.h is used by default

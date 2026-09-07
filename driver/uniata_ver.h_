@@ -1,0 +1,3 @@
+
+#define UNIATA_VER_STR     "**VER**"
+#define UNIATA_VER_DOT_STR "**VER_DOT**"

@@ -1,0 +1,9 @@
+# Microsoft Developer Studio Generated Dependency File, included by atactl.mak
+
+.\atactl.cpp : \
+    "..\driver\atapi.h" \
+    "..\driver\bm_devs.h" \
+    "..\driver\uata_ctl.h" \
+    "..\driver\tools.h" \
+    "..\driver\uniata_ver.h"
+	
