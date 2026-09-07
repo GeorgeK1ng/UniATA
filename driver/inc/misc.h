@@ -1,7 +1,7 @@
 #ifndef __CROSSNT_MISC__H__
 #define __CROSSNT_MISC__H__
 
-#ifdef USE_REACTOS_DDK
+#if defined(USE_REACTOS_DDK) || defined(UNIATA_AMD64)
 
 /* The definitions look so crappy, because the code doesn't care 
    whether the source is an array or an integer */
@@ -178,6 +178,6 @@ _XCHG_DD(
     );
 #define XCHG_DD(a,b) _XCHG_DD(&(a),&(b))
 
-#endif //USE_REACTOS_DDK
+#endif // USE_REACTOS_DDK || UNIATA_AMD64
 
 #endif // __CROSSNT_MISC__H__

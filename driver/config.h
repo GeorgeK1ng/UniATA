@@ -92,7 +92,7 @@
  #define USE_REACTOS_DDK
 #endif //__REACTOS__
 
-#ifdef USE_REACTOS_DDK
+#if defined(USE_REACTOS_DDK) || defined(UNIATA_AMD64)
  #define ULONGIO_PTR     ULONG_PTR
  #define CRNT_ILK_TYPE   
  #define CRNT_ILK_PTYPE
@@ -113,7 +113,7 @@
  #ifndef PtrToUlong
   #define PtrToUlong(u)  ((ULONG)((ULONG_PTR)(u)))
  #endif
-#endif //USE_REACTOS_DDK
+#endif // USE_REACTOS_DDK || UNIATA_AMD64
 
 /* Are we under GNU C (mingw) ??? */
 #if __GNUC__ >=3

@@ -58,15 +58,15 @@ popd
 
 set "OUTPUT_DIR=%REPO_ROOT%\driver\Release"
 if /I "%BUILD_ARCH%"=="x64" set "OUTPUT_DIR=%REPO_ROOT%\driver\Release_x64"
-if not exist "%OUTPUT_DIR%\IdeDma.sys" (
-  echo Build completed without producing %OUTPUT_DIR%\IdeDma.sys. 1>&2
+if not exist "%OUTPUT_DIR%\uniata.sys" (
+  echo Build completed without producing %OUTPUT_DIR%\uniata.sys. 1>&2
   exit /b 1
 )
 
 set "ARTIFACT_DIR=%REPO_ROOT%\artifact\%ARTIFACT_NAME%"
 if not exist "%ARTIFACT_DIR%" mkdir "%ARTIFACT_DIR%"
-copy /y "%OUTPUT_DIR%\IdeDma.sys" "%ARTIFACT_DIR%\IdeDma.sys" >nul
-if exist "%OUTPUT_DIR%\IdeDma.pdb" copy /y "%OUTPUT_DIR%\IdeDma.pdb" "%ARTIFACT_DIR%\IdeDma.pdb" >nul
+copy /y "%OUTPUT_DIR%\uniata.sys" "%ARTIFACT_DIR%\uniata.sys" >nul
+if exist "%OUTPUT_DIR%\uniata.pdb" copy /y "%OUTPUT_DIR%\uniata.pdb" "%ARTIFACT_DIR%\uniata.pdb" >nul
 exit /b 0
 
 :usage

@@ -17,7 +17,7 @@ KeTestSpinLock,(
     SpinLock
     ))
 
-#ifndef USE_REACTOS_DDK
+#if !defined(USE_REACTOS_DDK) && !defined(UNIATA_AMD64)
 
 CROSSNT_DECL(
 LONG,
@@ -72,7 +72,7 @@ InterlockedCompareExchange,(
 #define CrNtInterlockedExchangeAdd     InterlockedExchangeAdd
 #define CrNtInterlockedCompareExchange InterlockedCompareExchange
 
-#endif // !USE_REACTOS_DDK
+#endif // !USE_REACTOS_DDK && !UNIATA_AMD64
 
 CROSSNT_DECL_EX("HAL.DLL",
 KIRQL,__stdcall,

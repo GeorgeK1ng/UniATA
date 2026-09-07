@@ -1,4 +1,4 @@
-; Copyright (c) 2002-2016 UniATA team
+; Copyright (c) 2002-2026 UniATA team
 
 [Version]
 Signature="$Windows NT$"
@@ -6,7 +6,7 @@ Provider=%ALTERWARE%
 ClassGUID={4D36E97B-E325-11CE-BFC1-08002BE10318}
 Class=SCSIAdapter
 CatalogFile=uniata.cat
-DriverVer=03/09/2006,0.33.7.0
+DriverVer=09/07/2026,0.48.0.0
 
 
 [DestinationDirs]
@@ -20,11 +20,21 @@ ExcludeFromSelect = *
 ;
 
 [Manufacturer]
-%ALTERWARE%=UNIATA_HDC, NTx86
+%ALTERWARE%=UNIATA_HDC, NTx86, NTamd64
 
 [UNIATA_HDC]
 
 [UNIATA_HDC.NTx86]
+;DEVLIST
+%PCI\CC_0101.DeviceDesc% = uniata_Inst,,PCI\CC_0101                             ; Device ID for generic Dual PCI IDE  (UNKNOWN_PCI_IDE)
+%PCI\CC_0105.DeviceDesc% = uniata_Inst,,PCI\CC_0105                             ; Device ID for generic AHCI
+%UniATA_Name% = uniata_Inst
+
+;
+; General installation section
+;
+
+[UNIATA_HDC.NTamd64]
 ;DEVLIST
 %PCI\CC_0101.DeviceDesc% = uniata_Inst,,PCI\CC_0101                             ; Device ID for generic Dual PCI IDE  (UNKNOWN_PCI_IDE)
 %PCI\CC_0105.DeviceDesc% = uniata_Inst,,PCI\CC_0105                             ; Device ID for generic AHCI

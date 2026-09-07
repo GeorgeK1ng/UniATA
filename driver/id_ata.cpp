@@ -10635,15 +10635,15 @@ DriverEntry(
 
     if(!SavedDriverObject) {
         SavedDriverObject = (PDRIVER_OBJECT)DriverObject;
-#ifdef USE_REACTOS_DDK
-#ifdef _WIN64
+#if defined(USE_REACTOS_DDK) || defined(UNIATA_AMD64)
+#ifdef UNIATA_AMD64
         PsGetVersion(&MajorVersion, &MinorVersion, &BuildNumber, &SavedSPString);
 #else
         KdPrint(("UniATA Init: OS should be ReactOS\n"));
         MajorVersion=0x04;
         MinorVersion=0x01;
         BuildNumber=1;
-#endif // _WIN64
+#endif // UNIATA_AMD64
         CPU_num = KeNumberProcessors;
 #else
         // we are here for the 1st time
@@ -10654,7 +10654,7 @@ DriverEntry(
             return status;
         }
         CPU_num = KeNumberProcessors;
-#endif // USE_REACTOS_DDK
+#endif // USE_REACTOS_DDK || UNIATA_AMD64
         KdPrint(("UniATA Init: OS ver %x.%x (%d), %d CPU(s)\n", MajorVersion, MinorVersion, BuildNumber, CPU_num));
 
         KeQuerySystemTime(&t0);

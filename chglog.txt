@@ -1,3 +1,10 @@
+--
+2026.09.07 - v0.48
+
++) added WDK 7.1 builds for Windows XP through Windows 7 on x86 and x64
+!) fixed pointer truncation and legacy DDK compatibility issues on AMD64
+*) changed the produced driver name from IdeDma.sys to uniata.sys to match the INF files
+
 *) minor change
 o) optimization
 +) feature added

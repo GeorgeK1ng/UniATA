@@ -84,20 +84,62 @@ jobs:
         if: always()
         shell: pwsh
         run: |
-          $targets = @(
-            'windows-xp-x86',
-            'server-2003-x86',
-            'windows-xp-server-2003-x64',
-            'vista-server-2008-x86',
-            'vista-server-2008-x64',
-            'windows-7-x86',
-            'windows-7-x64'
-          )
-          $missing = @($targets | Where-Object {
-            -not (Test-Path (Join-Path 'artifact' "$_\IdeDma.sys"))
+          $targets = [ordered]@{
+            'windows-xp-x86' = 0x014c
+            'server-2003-x86' = 0x014c
+            'windows-xp-server-2003-x64' = 0x8664
+            'vista-server-2008-x86' = 0x014c
+            'vista-server-2008-x64' = 0x8664
+            'windows-7-x86' = 0x014c
+            'windows-7-x64' = 0x8664
+          }
+          $subsystemVersions = @{
+            'windows-xp-x86' = @(5, 1)
+            'server-2003-x86' = @(5, 2)
+            'windows-xp-server-2003-x64' = @(5, 2)
+            'vista-server-2008-x86' = @(6, 0)
+            'vista-server-2008-x64' = @(6, 0)
+            'windows-7-x86' = @(6, 1)
+            'windows-7-x64' = @(6, 1)
+          }
+          $missing = @($targets.Keys | Where-Object {
+            -not (Test-Path (Join-Path 'artifact' "$_\uniata.sys"))
           })
           if ($missing.Count -ne 0) {
-            throw "Builds missing IdeDma.sys: $($missing -join ', ')"
+            throw "Builds missing uniata.sys: $($missing -join ', ')"
+          }
+          foreach ($target in $targets.Keys) {
+            $driver = Join-Path 'artifact' "$target\uniata.sys"
+            $image = [IO.File]::ReadAllBytes($driver)
+            if ($image.Length -lt 64) { throw "$driver is not a valid PE image." }
+            $peOffset = [BitConverter]::ToInt32($image, 0x3c)
+            if ($peOffset -lt 0 -or $peOffset + 76 -gt $image.Length) {
+              throw "$driver has an invalid PE header offset."
+            }
+            $signature = [Text.Encoding]::ASCII.GetString($image, $peOffset, 4)
+            if ($signature -ne "PE`0`0") { throw "$driver has no PE signature." }
+            $machine = [BitConverter]::ToUInt16($image, $peOffset + 4)
+            if ($machine -ne $targets[$target]) {
+              throw ('{0} has PE machine 0x{1:x4}, expected 0x{2:x4}.' -f
+                $driver, $machine, $targets[$target])
+            }
+            $optionalHeader = $peOffset + 24
+            $majorSubsystem = [BitConverter]::ToUInt16($image, $optionalHeader + 48)
+            $minorSubsystem = [BitConverter]::ToUInt16($image, $optionalHeader + 50)
+            $expectedSubsystem = $subsystemVersions[$target]
+            if ($majorSubsystem -ne $expectedSubsystem[0] -or
+                $minorSubsystem -ne $expectedSubsystem[1]) {
+              throw ("$driver has native subsystem version " +
+                "$majorSubsystem.$minorSubsystem; expected " +
+                "$($expectedSubsystem[0]).$($expectedSubsystem[1]).")
+            }
+            $version = (Get-Item $driver).VersionInfo
+            if ($version.ProductVersion -notlike '0.48*') {
+              throw "$driver has product version '$($version.ProductVersion)', expected 0.48."
+            }
+            if ($version.LegalCopyright -notmatch '2026') {
+              throw "$driver does not contain the 2026 copyright metadata."
+            }
           }
 
       - uses: actions/upload-artifact@v4
