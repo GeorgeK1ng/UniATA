@@ -177,8 +177,8 @@ ALL : "$(OUTDIR)\IdeDma.sys" ".\copy.msg"
 
 PKG : "build_inf.exe" "build_atacmd.exe" "BusMaster_v$(VER).rar"
 !IF "$(VER)" == ""
-!ERROR  "ERROR: Version not specified !!!"
-!ENDIF 
+	@echo ERROR: Version not specified !!! & exit /b 1
+!ENDIF
 
 #ALL :
 #	nmake CFG="UniATA - Win32 Release"
