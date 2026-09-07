@@ -50,7 +50,7 @@ DDKINC=/I $(BaseDir)\inc
 !ELSEIF "$(BaseDir)" == "$(BASEDIRXP)"
 #makefile for XP
 BaseDirLib=$(BaseDir)
-DDKINC=/I $(BaseDir)\inc\ddk /I $(BaseDir)\inc
+DDKINC=/I $(BaseDir)\inc\ddk /I $(BaseDir)\inc\api /I $(BaseDir)\inc\crt /I $(BaseDir)\inc
 USE_XPDDK=1
 !ELSE 
 !ERROR BASEDIR is not equal to BASEDIRNT4, BASEDIR2K or BASEDIRXP
@@ -359,10 +359,12 @@ SRC=idedma
 "uniata_ver.h_" : "uniata_ver.h_.lk"
     del "uniata_ver.h_.lk"
 
+!IF "$(NO_BUILD_CMD)" == ""
 ".\atacmd_map.h" : "build_atacmd.exe"
-    echo "Build ATA command map"
-    .\build_atacmd.exe > atacmd_map.h
-    .\Dist\tools\srchrep.exe -e -src "\r\n" -dest "\n" "atacmd_map.h"
+	    echo "Build ATA command map"
+	    .\build_atacmd.exe > atacmd_map.h
+	    .\Dist\tools\srchrep.exe -e -src "\r\n" -dest "\n" "atacmd_map.h"
+!ENDIF
 
 ".\uniata_ver.h" : "uniata_ver.h_" "build_inf.exe"
 !IF "$(VER)" != ""
