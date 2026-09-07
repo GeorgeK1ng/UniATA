@@ -10,8 +10,18 @@ CFG=UniATA - Win32 Debug
 
 !IF "$(ARCH)" == "x64"
 ARCH_CPP_DEFINES=/D_AMD64_ /D_WIN64
+ARCH_LIB_DIR=amd64
+LINK_MACHINE=AMD64
+ARCH_KERNEL_LIBS=
 !ELSE
 ARCH_CPP_DEFINES=/D_X86_
+ARCH_LIB_DIR=i386
+LINK_MACHINE=I386
+ARCH_KERNEL_LIBS=int64.lib
+!ENDIF
+
+!IF "$(DDK_TARGET)" == ""
+DDK_TARGET=WXP
 !ENDIF
 
 !IF "$(CFG)" != "UniATA - Win32 Release" && "$(CFG)" != "UniATA - Win32 Debug"
@@ -75,11 +85,15 @@ LINK32=link.exe
 
 OUTDIR=.\Release
 INTDIR=.\Release
+!IF "$(ARCH)" == "x64"
+OUTDIR=.\Release_x64
+INTDIR=.\Release_x64
+!ENDIF
 ALTDIR=.\Debug
 !IF "$(USE_XPDDK)" == ""
 LibPath=$(BaseDirLib)\Lib\i386\Free\
 !ELSE 
-LibPath=$(BaseDirLib)\Lib\i386\
+LibPath=$(BaseDirLib)\Lib\$(DDK_TARGET)\$(ARCH_LIB_DIR)\
 !ENDIF 
 
 !ELSEIF  "$(CFG)" == "UniATA - Win32 Debug"
@@ -243,7 +257,7 @@ CPP_PROJ=$(CPP_PROJ_BASE) /Yu"stdafx.h"
 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
 	
-LINK32_FLAGS=/LIBPATH:$(LibPath) ntoskrnl.lib int64.lib Hal.lib ScsiPort.lib .\Lib\Release\CrossNtK.lib /nologo /entry:"DriverEntry" /incremental:no /debug /pdb:"$(OUTDIR)\IdeDma.pdb" /machine:I386 /nodefaultlib /def:".\IdeDma.def" /out:"$(OUTDIR)\IdeDma.sys" /driver /pdbtype:sept /subsystem:native /opt:ref /opt:icf
+LINK32_FLAGS=/LIBPATH:$(LibPath) ntoskrnl.lib $(ARCH_KERNEL_LIBS) Hal.lib ScsiPort.lib .\Lib\Release\CrossNtK.lib /nologo /entry:"DriverEntry" /incremental:no /debug /pdb:"$(OUTDIR)\IdeDma.pdb" /machine:$(LINK_MACHINE) /nodefaultlib /def:".\IdeDma.def" /out:"$(OUTDIR)\IdeDma.sys" /driver /subsystem:native /opt:ref /opt:icf
 #LINK32_FLAGS=$(BaseDir)\Lib\i386\Free\ntoskrnl.lib $(BaseDir)\Lib\i386\Free\int64.lib $(BaseDir)\Lib\i386\Checked\Hal.lib /nologo /entry:"DriverEntry" /incremental:no /pdb:"$(OUTDIR)\IdeDma.pdb" /machine:I386 /nodefaultlib /def:".\IdeDma.def" /out:"$(OUTDIR)\IdeDma.sys" /driver /subsystem:native 
 
 !ELSEIF  "$(CFG)" == "UniATA - Win32 Debug"

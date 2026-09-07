@@ -46,7 +46,8 @@ if errorlevel 1 (
   echo Driver source directory "%REPO_ROOT%\driver" was not found. 1>&2
   exit /b 2
 )
-nmake /nologo /f idedma.mak CFG="UniATA - Win32 Release" ARCH=%BUILD_ARCH% ALL
+nmake /nologo /f idedma.mak CFG="UniATA - Win32 Release" ARCH=%BUILD_ARCH% DDK_TARGET=%BUILD_TARGET% CLEAN
+nmake /nologo /f idedma.mak CFG="UniATA - Win32 Release" ARCH=%BUILD_ARCH% DDK_TARGET=%BUILD_TARGET% ALL
 if not errorlevel 1 goto :built
 set "BUILD_ERROR=%ERRORLEVEL%"
 popd
@@ -56,6 +57,7 @@ exit /b %BUILD_ERROR%
 popd
 
 set "OUTPUT_DIR=%REPO_ROOT%\driver\Release"
+if /I "%BUILD_ARCH%"=="x64" set "OUTPUT_DIR=%REPO_ROOT%\driver\Release_x64"
 if not exist "%OUTPUT_DIR%\IdeDma.sys" (
   echo Build completed without producing %OUTPUT_DIR%\IdeDma.sys. 1>&2
   exit /b 1
