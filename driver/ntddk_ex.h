@@ -631,6 +631,40 @@ typedef struct _IMAGE_EXPORT_DIRECTORY {
 } IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
 #endif // !defined(__REACTOS__) && !defined(_WIN64)
 
+#ifdef _WIN64
+// The AMD64 WDK headers hide these legacy HAL declarations even though the
+// routines remain available to drivers targeting the pre-WDM compatibility
+// paths used by UniATA.
+#define HalGetBusData(DataType, BusNumber, SlotNumber, Buffer, Length) \
+    HalGetBusDataByOffset((DataType), (BusNumber), (SlotNumber), (Buffer), 0, (Length))
+
+NTHALAPI
+NTSTATUS
+NTAPI
+HalAssignSlotResources(
+    IN PUNICODE_STRING RegistryPath,
+    IN PUNICODE_STRING DriverClassName OPTIONAL,
+    IN PDRIVER_OBJECT DriverObject,
+    IN PDEVICE_OBJECT DeviceObject,
+    IN INTERFACE_TYPE BusType,
+    IN ULONG BusNumber,
+    IN ULONG SlotNumber,
+    IN OUT PCM_RESOURCE_LIST *AllocatedResources
+    );
+
+NTHALAPI
+ULONG
+NTAPI
+HalGetInterruptVector(
+    IN INTERFACE_TYPE InterfaceType,
+    IN ULONG BusNumber,
+    IN ULONG BusInterruptLevel,
+    IN ULONG BusInterruptVector,
+    OUT PKIRQL Irql,
+    OUT PKAFFINITY Affinity
+    );
+#endif // _WIN64
+
 NTHALAPI
 VOID
 NTAPI
