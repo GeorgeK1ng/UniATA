@@ -6,7 +6,13 @@
 !IF "$(CFG)" == ""
 CFG=UniATA - Win32 Debug
 !MESSAGE No configuration specified. Defaulting to UniATA - Win32 Debug.
-!ENDIF 
+!ENDIF
+
+!IF "$(ARCH)" == "x64"
+ARCH_CPP_DEFINES=/D_AMD64_ /D_WIN64
+!ELSE
+ARCH_CPP_DEFINES=/D_X86_
+!ENDIF
 
 !IF "$(CFG)" != "UniATA - Win32 Release" && "$(CFG)" != "UniATA - Win32 Debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
@@ -232,7 +238,7 @@ CLEAN :
 
 !IF  "$(CFG)" == "UniATA - Win32 Release"
 
-CPP_PROJ_BASE=/nologo /Gz /MT /W3 /GX /O2 /Oy- $(DDKINC) /DNDEBUG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS /D_X86_ /D_WIN32_WINNT=0x0400 /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ_BASE=/nologo /Gz /MT /W3 /GX /O2 /Oy- $(DDKINC) /DNDEBUG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS $(ARCH_CPP_DEFINES) /D_WIN32_WINNT=0x0501 /DNTDDI_VERSION=0x05010000 /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 CPP_PROJ=$(CPP_PROJ_BASE) /Yu"stdafx.h"
 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
@@ -242,7 +248,7 @@ LINK32_FLAGS=/LIBPATH:$(LibPath) ntoskrnl.lib int64.lib Hal.lib ScsiPort.lib .\L
 
 !ELSEIF  "$(CFG)" == "UniATA - Win32 Debug"
 
-CPP_PROJ_BASE=/nologo /Gz /MTd /W3 /GX /Z7 /Od /Oy- $(DDKINC) /D_DEBUG /DDBG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS /D_X86_ /D_WIN32_WINNT=0x0400 /Fp"$(INTDIR)\idedma.pch" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ_BASE=/nologo /Gz /MTd /W3 /GX /Z7 /Od /Oy- $(DDKINC) /D_DEBUG /DDBG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS $(ARCH_CPP_DEFINES) /D_WIN32_WINNT=0x0501 /DNTDDI_VERSION=0x05010000 /Fp"$(INTDIR)\idedma.pch" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 CPP_PROJ=$(CPP_PROJ_BASE) /Yu"stdafx.h"
 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
