@@ -67,6 +67,8 @@ set "ARTIFACT_DIR=%REPO_ROOT%\artifact\%ARTIFACT_NAME%"
 if not exist "%ARTIFACT_DIR%" mkdir "%ARTIFACT_DIR%"
 copy /y "%OUTPUT_DIR%\uniata.sys" "%ARTIFACT_DIR%\uniata.sys" >nul
 if exist "%OUTPUT_DIR%\uniata.pdb" copy /y "%OUTPUT_DIR%\uniata.pdb" "%ARTIFACT_DIR%\uniata.pdb" >nul
+powershell.exe -NoLogo -NoProfile -ExecutionPolicy Bypass -File "%REPO_ROOT%\scripts\package-wdk71-target.ps1" -TargetName "%ARTIFACT_NAME%" -RepositoryRoot "%REPO_ROOT%"
+if errorlevel 1 exit /b %ERRORLEVEL%
 exit /b 0
 
 :usage

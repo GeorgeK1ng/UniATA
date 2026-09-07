@@ -20,11 +20,11 @@ ExcludeFromSelect = *
 ;
 
 [Manufacturer]
-%ALTERWARE%=UNIATA_HDC, NTx86, NTamd64
+%ALTERWARE%=UNIATA_HDC, NTx86.6.1, NTamd64.6.1
 
 [UNIATA_HDC]
 
-[UNIATA_HDC.NTx86]
+[UNIATA_HDC.NTx86.6.1]
 ;Well-known adapters
 %PCI\VEN_1191&DEV_0005.DeviceDesc%=uniata_Inst, PCI\VEN_1191&DEV_0005
 %PCI\VEN_1191&DEV_0006.DeviceDesc%=uniata_Inst, PCI\VEN_1191&DEV_0006
@@ -219,7 +219,7 @@ ExcludeFromSelect = *
 ; General installation section
 ;
 
-[UNIATA_HDC.NTamd64]
+[UNIATA_HDC.NTamd64.6.1]
 ;Well-known adapters
 %PCI\VEN_1191&DEV_0005.DeviceDesc%=uniata_Inst, PCI\VEN_1191&DEV_0005
 %PCI\VEN_1191&DEV_0006.DeviceDesc%=uniata_Inst, PCI\VEN_1191&DEV_0006

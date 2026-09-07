@@ -34,9 +34,9 @@ ExcludeFromSelect = *
 ;
 
 [Manufacturer]
-%ALTERWARE%=UNIATA_HDC
+%ALTERWARE%=UNIATA_HDC, NTx86.5.2
 
-[UNIATA_HDC]
+[UNIATA_HDC.NTx86.5.2]
 ;Well-known adapters
 %PCI\VEN_1191&DEV_0005.DeviceDesc%=uniata_Inst, PCI\VEN_1191&DEV_0005
 %PCI\VEN_1191&DEV_0006.DeviceDesc%=uniata_Inst, PCI\VEN_1191&DEV_0006

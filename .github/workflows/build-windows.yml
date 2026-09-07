@@ -102,14 +102,45 @@ jobs:
             'windows-7-x86' = @(6, 1)
             'windows-7-x64' = @(6, 1)
           }
-          $missing = @($targets.Keys | Where-Object {
-            -not (Test-Path (Join-Path 'artifact' "$_\uniata.sys"))
-          })
+          $infDecorations = @{
+            'windows-xp-x86' = 'NTx86.5.1'
+            'server-2003-x86' = 'NTx86.5.2'
+            'windows-xp-server-2003-x64' = 'NTamd64.5.2'
+            'vista-server-2008-x86' = 'NTx86.6.0'
+            'vista-server-2008-x64' = 'NTamd64.6.0'
+            'windows-7-x86' = 'NTx86.6.1'
+            'windows-7-x64' = 'NTamd64.6.1'
+          }
+          $missing = @(
+            foreach ($target in $targets.Keys) {
+              $directory = Join-Path 'artifact' $target
+              foreach ($file in @('uniata.sys', 'uniata.inf', 'txtsetup.oem', 'README.txt')) {
+                if (-not (Test-Path (Join-Path $directory $file))) {
+                  "$target/$file"
+                }
+              }
+            }
+          )
           if ($missing.Count -ne 0) {
-            throw "Builds missing uniata.sys: $($missing -join ', ')"
+            throw "Build packages have missing files: $($missing -join ', ')"
           }
           foreach ($target in $targets.Keys) {
             $driver = Join-Path 'artifact' "$target\uniata.sys"
+            $infPath = Join-Path 'artifact' "$target\uniata.inf"
+            $inf = [IO.File]::ReadAllText($infPath)
+            $decoration = $infDecorations[$target]
+            if ($inf -notmatch [regex]::Escape("%ALTERWARE%=UNIATA_HDC, $decoration") -or
+                $inf -notmatch [regex]::Escape("[UNIATA_HDC.$decoration]")) {
+              throw "$infPath is not restricted to $decoration."
+            }
+            if ($inf -match '(?m)^CatalogFile') {
+              throw "$infPath refers to a catalog that is not in the unsigned package."
+            }
+            $txtsetup = Get-Content (Join-Path 'artifact' "$target\txtsetup.oem") -Raw
+            if ($txtsetup -notmatch '\[Files\.scsi\.uniata\]' -or
+                $txtsetup -notmatch 'driver\s*=\s*d1,\s*uniata\.sys') {
+              throw "$target has invalid text-mode Setup metadata."
+            }
             $image = [IO.File]::ReadAllBytes($driver)
             if ($image.Length -lt 64) { throw "$driver is not a valid PE image." }
             $peOffset = [BitConverter]::ToInt32($image, 0x3c)
@@ -142,8 +173,58 @@ jobs:
             }
           }
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload Windows XP x86 package
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: uniata-windows-xp-through-7
-          path: artifact
+          name: uniata-windows-xp-x86
+          path: artifact/windows-xp-x86
+          if-no-files-found: error
+
+      - name: Upload Windows Server 2003 x86 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-server-2003-x86
+          path: artifact/server-2003-x86
+          if-no-files-found: error
+
+      - name: Upload Windows XP and Server 2003 x64 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-windows-xp-server-2003-x64
+          path: artifact/windows-xp-server-2003-x64
+          if-no-files-found: error
+
+      - name: Upload Windows Vista and Server 2008 x86 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-vista-server-2008-x86
+          path: artifact/vista-server-2008-x86
+          if-no-files-found: error
+
+      - name: Upload Windows Vista and Server 2008 x64 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-vista-server-2008-x64
+          path: artifact/vista-server-2008-x64
+          if-no-files-found: error
+
+      - name: Upload Windows 7 x86 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-windows-7-x86
+          path: artifact/windows-7-x86
+          if-no-files-found: error
+
+      - name: Upload Windows 7 x64 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-windows-7-x64
+          path: artifact/windows-7-x64
+          if-no-files-found: error
