@@ -1,0 +1,78 @@
+name: Build Windows XP through Windows 7 targets
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      WDK71_ISO_URL: https://github.com/KunYi/WDK_DDKArchive/releases/download/WDK_v7.1.0/GRMWDK_EN_7600_1.ISO
+      WDK_INSTALL_DIR: C:\WinDDK
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download and install WDK 7.1
+        shell: pwsh
+        run: |
+          $iso = Join-Path $env:RUNNER_TEMP 'wdk71.iso'
+          $media = Join-Path $env:RUNNER_TEMP 'wdk71'
+          Invoke-WebRequest -Uri $env:WDK71_ISO_URL -OutFile $iso
+          New-Item -ItemType Directory -Force -Path $media | Out-Null
+          7z.exe x $iso "-o$media" -y | Out-Null
+          $setup = Get-ChildItem $media -Recurse -Filter KitSetup.exe | Select-Object -First 1
+          if (-not $setup) { throw 'KitSetup.exe was not found in the WDK media.' }
+          $process = Start-Process $setup.FullName -ArgumentList @(
+            '/no-view', '/ui-level', 'EXPRESS', '/install', 'ALL',
+            '/install-location', $env:WDK_INSTALL_DIR
+          ) -WorkingDirectory $setup.DirectoryName -Wait -PassThru
+          if ($process.ExitCode -ne 0) { throw "KitSetup failed with $($process.ExitCode)." }
+          $setenv = Get-ChildItem $env:WDK_INSTALL_DIR -Recurse -Filter setenv.bat |
+            Where-Object { $_.FullName -match '7600\.16385\.1' } |
+            Select-Object -First 1
+          if (-not $setenv) {
+            $setenv = Get-ChildItem $env:WDK_INSTALL_DIR -Recurse -Filter setenv.bat |
+              Select-Object -First 1
+          }
+          if (-not $setenv) { throw 'setenv.bat was not installed.' }
+          "WDK_SETENV=$($setenv.FullName)" | Out-File $env:GITHUB_ENV -Append -Encoding ascii
+
+      - name: Build supported Windows targets
+        shell: cmd
+        run: |
+          call scripts\build-wdk71-target.cmd x86 WXP windows-xp-x86
+          call scripts\build-wdk71-target.cmd x86 WNET server-2003-x86
+          call scripts\build-wdk71-target.cmd x64 WNET windows-xp-server-2003-x64
+          call scripts\build-wdk71-target.cmd x86 WLH vista-server-2008-x86
+          call scripts\build-wdk71-target.cmd x64 WLH vista-server-2008-x64
+          call scripts\build-wdk71-target.cmd x86 WIN7 windows-7-x86
+          call scripts\build-wdk71-target.cmd x64 WIN7 windows-7-x64
+
+      - name: Verify all target artifacts
+        shell: pwsh
+        run: |
+          $targets = @(
+            'windows-xp-x86',
+            'server-2003-x86',
+            'windows-xp-server-2003-x64',
+            'vista-server-2008-x86',
+            'vista-server-2008-x64',
+            'windows-7-x86',
+            'windows-7-x64'
+          )
+          $missing = @($targets | Where-Object {
+            -not (Test-Path (Join-Path 'artifact' "$_\IdeDma.sys"))
+          })
+          if ($missing.Count -ne 0) {
+            throw "Builds missing IdeDma.sys: $($missing -join ', ')"
+          }
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-windows-xp-through-7
+          path: artifact
+
