@@ -112,6 +112,18 @@ BOOLEAN g_opt_Verbose = 0;
 BOOLEAN WinVer_WDM_Model = FALSE;
 ULONG CPU_num = 1;
 
+#ifdef _WIN64
+extern "C" {
+ULONG MajorVersion = 0;
+ULONG MinorVersion = 0;
+ULONG BuildNumber = 0;
+ULONG SPVersion = 0;
+HANDLE g_hNtosKrnl = NULL;
+HANDLE g_hHal = NULL;
+};
+UNICODE_STRING SavedSPString = {0};
+#endif // _WIN64
+
 //UCHAR EnableDma = FALSE;
 //UCHAR EnableReorder = FALSE;
 
@@ -10624,10 +10636,14 @@ DriverEntry(
     if(!SavedDriverObject) {
         SavedDriverObject = (PDRIVER_OBJECT)DriverObject;
 #ifdef USE_REACTOS_DDK
+#ifdef _WIN64
+        PsGetVersion(&MajorVersion, &MinorVersion, &BuildNumber, &SavedSPString);
+#else
         KdPrint(("UniATA Init: OS should be ReactOS\n"));
         MajorVersion=0x04;
         MinorVersion=0x01;
         BuildNumber=1;
+#endif // _WIN64
         CPU_num = KeNumberProcessors;
 #else
         // we are here for the 1st time
