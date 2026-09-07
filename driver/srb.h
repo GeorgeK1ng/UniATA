@@ -948,6 +948,20 @@ ScsiPortConvertPhysicalAddressToUlong(
 
 #define ScsiPortConvertPhysicalAddressToUlong(Address) ((Address).LowPart)
 
+#ifdef _WIN64
+__forceinline
+SCSI_PHYSICAL_ADDRESS
+ScsiPortConvertUlongPtrToPhysicalAddress(
+    IN ULONG_PTR Address
+    )
+{
+    SCSI_PHYSICAL_ADDRESS physicalAddress;
+    physicalAddress.QuadPart = Address;
+    return physicalAddress;
+}
+#define ScsiPortConvertUlongToPhysicalAddress ScsiPortConvertUlongPtrToPhysicalAddress
+#endif // _WIN64
+
 SCSIPORT_API
 BOOLEAN NTAPI
 ScsiPortValidateRange(

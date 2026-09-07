@@ -31,7 +31,7 @@ Notes:
 Revision History:
 
     Some parts of code were taken from FreeBSD 5.1-6.1 ATA driver by
-        Søren Schmidt, Copyright (c) 1998-2007
+        SÃ¸ren Schmidt, Copyright (c) 1998-2007
     added IT8172 IDE controller support from Linux
     added VIA 8233/8235 fix from Linux
     added 80-pin cable detection from Linux for
@@ -2812,7 +2812,7 @@ VOID
 UniataInitIoRes(
     IN PHW_CHANNEL chan,
     IN ULONG idx,
-    IN ULONG addr,
+    IN ULONG_PTR addr,
     IN BOOLEAN MemIo,
     IN BOOLEAN Proc
     )
@@ -2828,7 +2828,7 @@ UniataInitIoRes(
 VOID
 UniataInitIoResEx(
     IN PIORES IoRes,
-    IN ULONG addr,
+    IN ULONG_PTR addr,
     IN BOOLEAN MemIo,
     IN BOOLEAN Proc
     )

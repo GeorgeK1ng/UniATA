@@ -11426,9 +11426,13 @@ AtapiRegCheckParameterValue(
 //    KdPrint(( "AtapiCheckRegValue: %ws -> %ws\n", PathSuffix, Name));
 //    KdPrint(( "AtapiCheckRegValue: RegistryPath %ws\n", RegistryPath->Buffer));
 
-    paramPath.Length = 0;
-    paramPath.MaximumLength = RegistryPath->Length +
+    SIZE_T paramPathLength = RegistryPath->Length +
         (wcslen(PathSuffix)+2)*sizeof(WCHAR);
+    if(paramPathLength > 0xffff) {
+        return Default;
+    }
+    paramPath.Length = 0;
+    paramPath.MaximumLength = (USHORT)paramPathLength;
     paramPath.Buffer = (PWCHAR)ExAllocatePool(NonPagedPool, paramPath.MaximumLength);
     if(!paramPath.Buffer) {
         KdPrint(("AtapiCheckRegValue: couldn't allocate paramPath\n"));

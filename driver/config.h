@@ -96,7 +96,7 @@
  #define ULONGIO_PTR     ULONG_PTR
  #define CRNT_ILK_TYPE   
  #define CRNT_ILK_PTYPE
- #define REGRTL_STR_PTYPE  
+ #define REGRTL_STR_PTYPE  (PWCHAR)
 #else 
  #ifndef NTDDI_VERSION
   #define ULONG_PTR      ULONG

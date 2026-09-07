@@ -254,7 +254,7 @@ CLEAN :
 
 !IF  "$(CFG)" == "UniATA - Win32 Release"
 
-CPP_PROJ_BASE=/nologo /Gz /GS- /MT /W3 /GX /O2 /Oy- $(DDKINC) /DNDEBUG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS $(ARCH_CPP_DEFINES) /D_WIN32_WINNT=0x0501 /DNTDDI_VERSION=0x05010000 /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+CPP_PROJ_BASE=/nologo /Gz /GS- /MT /W3 /O2 /Oy- $(DDKINC) /DNDEBUG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS $(ARCH_CPP_DEFINES) /D_WIN32_WINNT=0x0501 /DNTDDI_VERSION=0x05010000 /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 CPP_PROJ=$(CPP_PROJ_BASE) /Yu"stdafx.h"
 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
@@ -264,7 +264,7 @@ LINK32_FLAGS=/LIBPATH:$(LibPath) ntoskrnl.lib $(ARCH_KERNEL_LIBS) Hal.lib ScsiPo
 
 !ELSEIF  "$(CFG)" == "UniATA - Win32 Debug"
 
-CPP_PROJ_BASE=/nologo /Gz /GS- /MTd /W3 /GX /Z7 /Od /Oy- $(DDKINC) /D_DEBUG /DDBG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS $(ARCH_CPP_DEFINES) /D_WIN32_WINNT=0x0501 /DNTDDI_VERSION=0x05010000 /Fp"$(INTDIR)\idedma.pch" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
+CPP_PROJ_BASE=/nologo /Gz /GS- /MTd /W3 /Z7 /Od /Oy- $(DDKINC) /D_DEBUG /DDBG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS $(ARCH_CPP_DEFINES) /D_WIN32_WINNT=0x0501 /DNTDDI_VERSION=0x05010000 /Fp"$(INTDIR)\idedma.pch" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 CPP_PROJ=$(CPP_PROJ_BASE) /Yu"stdafx.h"
 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
@@ -403,8 +403,8 @@ SRC=idedma
 !ENDIF 
 
 "$(INTDIR)\$(SRC).res" : "$(SRC).rc" "$(INTDIR)" "uniata_ver.h" "uataerr.h" "build_inf.exe"
-    -@erase ".\$(SRC).res"
+    @if exist ".\$(SRC).res" erase ".\$(SRC).res"
     $(RSC) $(RSC_PROJ) "$(SRC).rc"
-    -@erase "$(INTDIR)\$(SRC).res"
-    -@move "$(SRC).res" "$(INTDIR)\$(SRC).res"
+    @if exist "$(INTDIR)\$(SRC).res" erase "$(INTDIR)\$(SRC).res"
+    @move "$(SRC).res" "$(INTDIR)\$(SRC).res"
 
