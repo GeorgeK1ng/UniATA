@@ -2,8 +2,8 @@
 setlocal EnableExtensions
 
 if "%~3"=="" goto :usage
-if not defined WDK_SETENV (
-  echo WDK_SETENV is not set. 1>&2
+if not defined DDKROOT (
+  echo DDKROOT is not set. 1>&2
   exit /b 2
 )
 
@@ -11,17 +11,14 @@ set "BUILD_ARCH=%~1"
 set "BUILD_TARGET=%~2"
 set "ARTIFACT_NAME=%~3"
 
-if /I "%BUILD_ARCH%"=="x86" (
-  set "WDK_ARCH=x86"
-) else if /I "%BUILD_ARCH%"=="x64" (
-  set "WDK_ARCH=x64"
-) else (
-  echo Unsupported architecture "%BUILD_ARCH%". Use x86 or x64. 1>&2
-  exit /b 2
-)
+if /I "%BUILD_ARCH%"=="x86" goto :architecture_ok
+if /I "%BUILD_ARCH%"=="x64" goto :architecture_ok
+echo Unsupported architecture "%BUILD_ARCH%". Use x86 or x64. 1>&2
+exit /b 2
 
-call "%WDK_SETENV%" "%WDK_INSTALL_DIR%" fre %WDK_ARCH% %BUILD_TARGET% no_oacr
-if errorlevel 1 exit /b %errorlevel%
+:architecture_ok
+call "%DDKROOT%\bin\setenv.bat" "%DDKROOT%" fre %BUILD_ARCH% %BUILD_TARGET% no_oacr
+if errorlevel 1 exit /b 3
 
 rem The checked-in makefile predates WDK 7.1. The environment aliases below
 rem let it consume the compiler, headers and libraries selected by SetEnv.
@@ -31,7 +28,7 @@ set "NO_BUILD_INF=1"
 set "NO_BUILD_CMD=1"
 
 pushd driver
-nmake /nologo /f idedma.mak CFG="UniATA - Win32 Release" ARCH=%WDK_ARCH% /A
+nmake /nologo /f idedma.mak CFG="UniATA - Win32 Release" ARCH=%BUILD_ARCH% /A
 if errorlevel 1 (
   set "BUILD_ERROR=%errorlevel%"
   popd

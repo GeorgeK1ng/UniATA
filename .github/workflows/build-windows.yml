@@ -29,7 +29,11 @@ jobs:
             '/no-view', '/ui-level', 'EXPRESS', '/install', 'ALL',
             '/install-location', $env:WDK_INSTALL_DIR
           ) -WorkingDirectory $setup.DirectoryName -Wait -PassThru
-          if ($process.ExitCode -ne 0) { throw "KitSetup failed with $($process.ExitCode)." }
+          # 3010 means that setup succeeded and requested a reboot. Hosted
+          # runners do not need that reboot before using the command-line WDK.
+          if ($process.ExitCode -notin @(0, 3010)) {
+            throw "KitSetup failed with $($process.ExitCode)."
+          }
           $setenv = Get-ChildItem $env:WDK_INSTALL_DIR -Recurse -Filter setenv.bat |
             Where-Object { $_.FullName -match '7600\.16385\.1' } |
             Select-Object -First 1
@@ -38,20 +42,46 @@ jobs:
               Select-Object -First 1
           }
           if (-not $setenv) { throw 'setenv.bat was not installed.' }
-          "WDK_SETENV=$($setenv.FullName)" | Out-File $env:GITHUB_ENV -Append -Encoding ascii
+          $ddkRoot = Split-Path $setenv.DirectoryName -Parent
+          "DDKROOT=$ddkRoot" | Out-File $env:GITHUB_ENV -Append -Encoding ascii
 
-      - name: Build supported Windows targets
+      - name: Build Windows XP x86
         shell: cmd
-        run: |
-          call scripts\build-wdk71-target.cmd x86 WXP windows-xp-x86
-          call scripts\build-wdk71-target.cmd x86 WNET server-2003-x86
-          call scripts\build-wdk71-target.cmd x64 WNET windows-xp-server-2003-x64
-          call scripts\build-wdk71-target.cmd x86 WLH vista-server-2008-x86
-          call scripts\build-wdk71-target.cmd x64 WLH vista-server-2008-x64
-          call scripts\build-wdk71-target.cmd x86 WIN7 windows-7-x86
-          call scripts\build-wdk71-target.cmd x64 WIN7 windows-7-x64
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x86 WXP windows-xp-x86
+
+      - name: Build Server 2003 x86
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x86 WNET server-2003-x86
+
+      - name: Build Windows XP and Server 2003 x64
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x64 WNET windows-xp-server-2003-x64
+
+      - name: Build Windows Vista and Server 2008 x86
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x86 WLH vista-server-2008-x86
+
+      - name: Build Windows Vista and Server 2008 x64
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x64 WLH vista-server-2008-x64
+
+      - name: Build Windows 7 x86
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x86 WIN7 windows-7-x86
+
+      - name: Build Windows 7 x64
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x64 WIN7 windows-7-x64
 
       - name: Verify all target artifacts
+        if: always()
         shell: pwsh
         run: |
           $targets = @(
@@ -75,4 +105,3 @@ jobs:
         with:
           name: uniata-windows-xp-through-7
           path: artifact
-
