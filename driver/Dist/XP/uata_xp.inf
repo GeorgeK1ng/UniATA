@@ -1,4 +1,4 @@
-; Copyright (c) 2002-2014 UniATA group
+; Copyright (c) 2002-2026 UniATA group
 
 [Version]
 Signature="$Windows NT$"
@@ -6,7 +6,7 @@ Provider=%ALTERWARE%
 ClassGUID={4D36E97B-E325-11CE-BFC1-08002BE10318}
 Class=SCSIAdapter
 CatalogFile=uniata.cat
-DriverVer=10/16/2021,0.47.2.0
+DriverVer=09/07/2026,0.48.0.0
 
 ;
 ; Source file information
@@ -18,12 +18,10 @@ DriverVer=10/16/2021,0.47.2.0
 [SourceDisksFiles]
 ; Files for disk UniATA Installation Disk #1 (SCSIAdapter)
 uniata.sys = 1,..\,
-atactl.exe = 1,..\,
 
 
 
 [DestinationDirs]
-Sys32DestDir = 11 ; System32
 DefaultDestDir = 12 ; DIRID_DRIVERS
 
 [ControlFlags]
@@ -575,12 +573,12 @@ ExcludeFromSelect = *
 
 [uniata_Inst]
 AddReg = uniata_Inst.AddReg
-CopyFiles = uniata_Inst.Miniport, Sys32DestDir
+CopyFiles = uniata_Inst.Miniport
 
 
 [uniata_Inst_Isa]
 AddReg = uniata_Inst.AddReg
-CopyFiles = uniata_Inst.Miniport, Sys32DestDir
+CopyFiles = uniata_Inst.Miniport
 LogConfig = esdilc1, esdilc2, esdilc3, esdilc4
 
 [uniata_Inst.AddReg]
@@ -592,8 +590,6 @@ LogConfig = esdilc1, esdilc2, esdilc3, esdilc4
 [uniata_Inst.Miniport]
 uniata.sys
 
-[Sys32DestDir]
-atactl.exe
 
 
 ;

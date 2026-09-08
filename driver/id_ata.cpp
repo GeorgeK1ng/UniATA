@@ -35,7 +35,7 @@ Revision History:
          Chuck Park (ChuckP)
 
     Some parts of code were taken from FreeBSD 4.3-6.1 ATA driver by
-         Søren Schmidt, Copyright (c) 1998-2007
+         SÃ¸ren Schmidt, Copyright (c) 1998-2007
 
     All parts of code are significantly changed/updated by
          Alter, Copyright (c) 2002-2014:
@@ -111,6 +111,18 @@ BOOLEAN g_opt_Verbose = 0;
 
 BOOLEAN WinVer_WDM_Model = FALSE;
 ULONG CPU_num = 1;
+
+#ifdef _WIN64
+extern "C" {
+ULONG MajorVersion = 0;
+ULONG MinorVersion = 0;
+ULONG BuildNumber = 0;
+ULONG SPVersion = 0;
+HANDLE g_hNtosKrnl = NULL;
+HANDLE g_hHal = NULL;
+};
+UNICODE_STRING SavedSPString = {0};
+#endif // _WIN64
 
 //UCHAR EnableDma = FALSE;
 //UCHAR EnableReorder = FALSE;
@@ -10623,11 +10635,15 @@ DriverEntry(
 
     if(!SavedDriverObject) {
         SavedDriverObject = (PDRIVER_OBJECT)DriverObject;
-#ifdef USE_REACTOS_DDK
+#if defined(USE_REACTOS_DDK) || defined(UNIATA_AMD64)
+#ifdef UNIATA_AMD64
+        PsGetVersion(&MajorVersion, &MinorVersion, &BuildNumber, &SavedSPString);
+#else
         KdPrint(("UniATA Init: OS should be ReactOS\n"));
         MajorVersion=0x04;
         MinorVersion=0x01;
         BuildNumber=1;
+#endif // UNIATA_AMD64
         CPU_num = KeNumberProcessors;
 #else
         // we are here for the 1st time
@@ -10637,8 +10653,8 @@ DriverEntry(
             //HalDisplayString((PUCHAR)"DbgPrnHkInitialize: CrNtInit failed\n");
             return status;
         }
-        CPU_num = *KeNumberProcessors;
-#endif // USE_REACTOS_DDK
+        CPU_num = KeNumberProcessors;
+#endif // USE_REACTOS_DDK || UNIATA_AMD64
         KdPrint(("UniATA Init: OS ver %x.%x (%d), %d CPU(s)\n", MajorVersion, MinorVersion, BuildNumber, CPU_num));
 
         KeQuerySystemTime(&t0);
@@ -11410,9 +11426,13 @@ AtapiRegCheckParameterValue(
 //    KdPrint(( "AtapiCheckRegValue: %ws -> %ws\n", PathSuffix, Name));
 //    KdPrint(( "AtapiCheckRegValue: RegistryPath %ws\n", RegistryPath->Buffer));
 
-    paramPath.Length = 0;
-    paramPath.MaximumLength = RegistryPath->Length +
+    SIZE_T paramPathLength = RegistryPath->Length +
         (wcslen(PathSuffix)+2)*sizeof(WCHAR);
+    if(paramPathLength > 0xffff) {
+        return Default;
+    }
+    paramPath.Length = 0;
+    paramPath.MaximumLength = (USHORT)paramPathLength;
     paramPath.Buffer = (PWCHAR)ExAllocatePool(NonPagedPool, paramPath.MaximumLength);
     if(!paramPath.Buffer) {
         KdPrint(("AtapiCheckRegValue: couldn't allocate paramPath\n"));

@@ -92,20 +92,28 @@
  #define USE_REACTOS_DDK
 #endif //__REACTOS__
 
-#ifdef USE_REACTOS_DDK
+#if defined(USE_REACTOS_DDK) || defined(UNIATA_AMD64)
  #define ULONGIO_PTR     ULONG_PTR
  #define CRNT_ILK_TYPE   
  #define CRNT_ILK_PTYPE
- #define REGRTL_STR_PTYPE  
+ #define REGRTL_STR_PTYPE  (PWCHAR)
 #else 
- #define ULONG_PTR       ULONG
- #define ULONGIO_PTR     ULONG
+ #ifndef NTDDI_VERSION
+  #define ULONG_PTR      ULONG
+  #define ULONGIO_PTR    ULONG
+ #else
+  #define ULONGIO_PTR    ULONG_PTR
+ #endif
  #define CRNT_ILK_TYPE   (PVOID)
  #define CRNT_ILK_PTYPE  (PVOID*)
  #define REGRTL_STR_PTYPE  (PWCHAR)
- #define UlongToPtr(u)   ((PVOID)((ULONG)(u)))
- #define PtrToUlong(u)   ((ULONG)((PVOID)(u)))
-#endif //USE_REACTOS_DDK
+ #ifndef UlongToPtr
+  #define UlongToPtr(u)  ((PVOID)((ULONG_PTR)(u)))
+ #endif
+ #ifndef PtrToUlong
+  #define PtrToUlong(u)  ((ULONG)((ULONG_PTR)(u)))
+ #endif
+#endif // USE_REACTOS_DDK || UNIATA_AMD64
 
 /* Are we under GNU C (mingw) ??? */
 #if __GNUC__ >=3

@@ -1,11 +1,11 @@
-; Copyright (c) 2002-2004 UniATA group
+; Copyright (c) 2002-2026 UniATA group
 
 [version]
 Signature="$WINDOWS NT$"
 Class=SCSIAdapter
 ClassGuid={4D36E97B-E325-11CE-BFC1-08002BE10318}
 Provider=%ALTERWARE%
-DriverVer=07/04/2004
+DriverVer=09/07/2026,0.48.0.0
 CatalogFile=uniata.cat
 
 

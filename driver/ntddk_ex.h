@@ -9,7 +9,7 @@
 //#endif //USE_REACTOS_DDK
 
 
-#if !defined(FILE_CHARACTERISTIC_PNP_DEVICE) || defined(USE_REACTOS_DDK) // DDK 2003
+#if !defined(_NTIFS_) || defined(USE_REACTOS_DDK)
 
 #ifndef FILE_CHARACTERISTIC_PNP_DEVICE
 #define FILE_CHARACTERISTIC_PNP_DEVICE  0x00000800
@@ -131,7 +131,7 @@ typedef enum _SYSTEM_INFORMATION_CLASS {
 #endif // USE_REACTOS_DDK
 } SYSTEM_INFORMATION_CLASS;
 
-#endif // !defined(FILE_CHARACTERISTIC_PNP_DEVICE) || defined(USE_REACTOS_DDK)
+#endif // !defined(_NTIFS_) || defined(USE_REACTOS_DDK)
 
 
 NTSYSAPI
@@ -523,7 +523,7 @@ typedef struct _KTHREAD_HDR {
 */
 } KTHREAD_HDR, *PKTHREAD_HDR;
 
-#ifndef __REACTOS__
+#if !defined(__REACTOS__) && !defined(_WIN64)
 typedef struct _IMAGE_DOS_HEADER {      // DOS .EXE header
     WORD   e_magic;                     // Magic number
     WORD   e_cblp;                      // Bytes on last page of file
@@ -629,7 +629,41 @@ typedef struct _IMAGE_EXPORT_DIRECTORY {
     DWORD   AddressOfNames;         // RVA from base of image
     DWORD   AddressOfNameOrdinals;  // RVA from base of image
 } IMAGE_EXPORT_DIRECTORY, *PIMAGE_EXPORT_DIRECTORY;
-#endif
+#endif // !defined(__REACTOS__) && !defined(_WIN64)
+
+#ifdef _WIN64
+// The AMD64 WDK headers hide these legacy HAL declarations even though the
+// routines remain available to drivers targeting the pre-WDM compatibility
+// paths used by UniATA.
+#define HalGetBusData(DataType, BusNumber, SlotNumber, Buffer, Length) \
+    HalGetBusDataByOffset((DataType), (BusNumber), (SlotNumber), (Buffer), 0, (Length))
+
+NTHALAPI
+NTSTATUS
+NTAPI
+HalAssignSlotResources(
+    IN PUNICODE_STRING RegistryPath,
+    IN PUNICODE_STRING DriverClassName OPTIONAL,
+    IN PDRIVER_OBJECT DriverObject,
+    IN PDEVICE_OBJECT DeviceObject,
+    IN INTERFACE_TYPE BusType,
+    IN ULONG BusNumber,
+    IN ULONG SlotNumber,
+    IN OUT PCM_RESOURCE_LIST *AllocatedResources
+    );
+
+NTHALAPI
+ULONG
+NTAPI
+HalGetInterruptVector(
+    IN INTERFACE_TYPE InterfaceType,
+    IN ULONG BusNumber,
+    IN ULONG BusInterruptLevel,
+    IN ULONG BusInterruptVector,
+    OUT PKIRQL Irql,
+    OUT PKAFFINITY Affinity
+    );
+#endif // _WIN64
 
 NTHALAPI
 VOID

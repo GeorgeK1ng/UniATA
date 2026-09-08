@@ -1,10 +1,9 @@
-#include "config.h"
-
 extern "C" {
 
 #include <ntddk.h>
 
 };
+#include "config.h"
 #include "stddef.h"
 #include "stdarg.h"
 

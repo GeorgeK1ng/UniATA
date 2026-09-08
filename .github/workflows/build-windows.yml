@@ -1,0 +1,233 @@
+name: Build Windows XP through Windows 7 targets
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-latest
+    env:
+      WDK71_ISO_URL: https://github.com/KunYi/WDK_DDKArchive/releases/download/WDK_v7.1.0/GRMWDK_EN_7600_1.ISO
+      WDK_INSTALL_DIR: C:\WinDDK
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Download and install WDK 7.1
+        shell: pwsh
+        run: |
+          $iso = Join-Path $env:RUNNER_TEMP 'wdk71.iso'
+          $media = Join-Path $env:RUNNER_TEMP 'wdk71'
+          Invoke-WebRequest -Uri $env:WDK71_ISO_URL -OutFile $iso
+          New-Item -ItemType Directory -Force -Path $media | Out-Null
+          7z.exe x $iso "-o$media" -y | Out-Null
+          $setup = Get-ChildItem $media -Recurse -Filter KitSetup.exe | Select-Object -First 1
+          if (-not $setup) { throw 'KitSetup.exe was not found in the WDK media.' }
+          $process = Start-Process $setup.FullName -ArgumentList @(
+            '/no-view', '/ui-level', 'EXPRESS', '/install', 'ALL',
+            '/install-location', $env:WDK_INSTALL_DIR
+          ) -WorkingDirectory $setup.DirectoryName -Wait -PassThru
+          # 3010 means that setup succeeded and requested a reboot. Hosted
+          # runners do not need that reboot before using the command-line WDK.
+          if ($process.ExitCode -notin @(0, 3010)) {
+            throw "KitSetup failed with $($process.ExitCode)."
+          }
+          $setenv = Get-ChildItem $env:WDK_INSTALL_DIR -Recurse -Filter setenv.bat |
+            Where-Object { $_.FullName -match '7600\.16385\.1' } |
+            Select-Object -First 1
+          if (-not $setenv) {
+            $setenv = Get-ChildItem $env:WDK_INSTALL_DIR -Recurse -Filter setenv.bat |
+              Select-Object -First 1
+          }
+          if (-not $setenv) { throw 'setenv.bat was not installed.' }
+          $ddkRoot = Split-Path $setenv.DirectoryName -Parent
+          "DDKROOT=$ddkRoot" | Out-File $env:GITHUB_ENV -Append -Encoding ascii
+
+      - name: Build Windows XP x86
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x86 WXP windows-xp-x86
+
+      - name: Build Server 2003 x86
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x86 WNET server-2003-x86
+
+      - name: Build Windows XP and Server 2003 x64
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x64 WNET windows-xp-server-2003-x64
+
+      - name: Build Windows Vista and Server 2008 x86
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x86 WLH vista-server-2008-x86
+
+      - name: Build Windows Vista and Server 2008 x64
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x64 WLH vista-server-2008-x64
+
+      - name: Build Windows 7 x86
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x86 WIN7 windows-7-x86
+
+      - name: Build Windows 7 x64
+        shell: cmd
+        continue-on-error: true
+        run: scripts\build-wdk71-target.cmd x64 WIN7 windows-7-x64
+
+      - name: Verify all target artifacts
+        if: always()
+        shell: pwsh
+        run: |
+          $targets = [ordered]@{
+            'windows-xp-x86' = 0x014c
+            'server-2003-x86' = 0x014c
+            'windows-xp-server-2003-x64' = 0x8664
+            'vista-server-2008-x86' = 0x014c
+            'vista-server-2008-x64' = 0x8664
+            'windows-7-x86' = 0x014c
+            'windows-7-x64' = 0x8664
+          }
+          $subsystemVersions = @{
+            'windows-xp-x86' = @(5, 1)
+            'server-2003-x86' = @(5, 2)
+            'windows-xp-server-2003-x64' = @(5, 2)
+            'vista-server-2008-x86' = @(6, 0)
+            'vista-server-2008-x64' = @(6, 0)
+            'windows-7-x86' = @(6, 1)
+            'windows-7-x64' = @(6, 1)
+          }
+          $infDecorations = @{
+            'windows-xp-x86' = 'NTx86.5.1'
+            'server-2003-x86' = 'NTx86.5.2'
+            'windows-xp-server-2003-x64' = 'NTamd64.5.2'
+            'vista-server-2008-x86' = 'NTx86.6.0'
+            'vista-server-2008-x64' = 'NTamd64.6.0'
+            'windows-7-x86' = 'NTx86.6.1'
+            'windows-7-x64' = 'NTamd64.6.1'
+          }
+          $missing = @(
+            foreach ($target in $targets.Keys) {
+              $directory = Join-Path 'artifact' $target
+              foreach ($file in @('uniata.sys', 'uniata.inf', 'txtsetup.oem', 'README.txt')) {
+                if (-not (Test-Path (Join-Path $directory $file))) {
+                  "$target/$file"
+                }
+              }
+            }
+          )
+          if ($missing.Count -ne 0) {
+            throw "Build packages have missing files: $($missing -join ', ')"
+          }
+          foreach ($target in $targets.Keys) {
+            $driver = Join-Path 'artifact' "$target\uniata.sys"
+            $infPath = Join-Path 'artifact' "$target\uniata.inf"
+            $inf = [IO.File]::ReadAllText($infPath)
+            $decoration = $infDecorations[$target]
+            if ($inf -notmatch [regex]::Escape("%ALTERWARE%=UNIATA_HDC, $decoration") -or
+                $inf -notmatch [regex]::Escape("[UNIATA_HDC.$decoration]")) {
+              throw "$infPath is not restricted to $decoration."
+            }
+            if ($inf -notmatch '(?m)^CatalogFile=uniata\.cat\s*$') {
+              throw "$infPath does not declare the expected uniata.cat catalog."
+            }
+            if ($inf -match '(?i)atactl\.exe') {
+              throw "$infPath tries to install the optional atactl utility."
+            }
+            $txtsetup = Get-Content (Join-Path 'artifact' "$target\txtsetup.oem") -Raw
+            if ($txtsetup -notmatch '\[Files\.scsi\.uniata\]' -or
+                $txtsetup -notmatch 'driver\s*=\s*d1,\s*uniata\.sys') {
+              throw "$target has invalid text-mode Setup metadata."
+            }
+            $image = [IO.File]::ReadAllBytes($driver)
+            if ($image.Length -lt 64) { throw "$driver is not a valid PE image." }
+            $peOffset = [BitConverter]::ToInt32($image, 0x3c)
+            if ($peOffset -lt 0 -or $peOffset + 76 -gt $image.Length) {
+              throw "$driver has an invalid PE header offset."
+            }
+            $signature = [Text.Encoding]::ASCII.GetString($image, $peOffset, 4)
+            if ($signature -ne "PE`0`0") { throw "$driver has no PE signature." }
+            $machine = [BitConverter]::ToUInt16($image, $peOffset + 4)
+            if ($machine -ne $targets[$target]) {
+              throw ('{0} has PE machine 0x{1:x4}, expected 0x{2:x4}.' -f
+                $driver, $machine, $targets[$target])
+            }
+            $optionalHeader = $peOffset + 24
+            $majorSubsystem = [BitConverter]::ToUInt16($image, $optionalHeader + 48)
+            $minorSubsystem = [BitConverter]::ToUInt16($image, $optionalHeader + 50)
+            $expectedSubsystem = $subsystemVersions[$target]
+            if ($majorSubsystem -ne $expectedSubsystem[0] -or
+                $minorSubsystem -ne $expectedSubsystem[1]) {
+              throw ("$driver has native subsystem version " +
+                "$majorSubsystem.$minorSubsystem; expected " +
+                "$($expectedSubsystem[0]).$($expectedSubsystem[1]).")
+            }
+            $version = (Get-Item $driver).VersionInfo
+            if ($version.ProductVersion -notlike '0.48*') {
+              throw "$driver has product version '$($version.ProductVersion)', expected 0.48."
+            }
+            if ($version.LegalCopyright -notmatch '2026') {
+              throw "$driver does not contain the 2026 copyright metadata."
+            }
+          }
+
+      - name: Upload Windows XP x86 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-windows-xp-x86
+          path: artifact/windows-xp-x86
+          if-no-files-found: error
+
+      - name: Upload Windows Server 2003 x86 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-server-2003-x86
+          path: artifact/server-2003-x86
+          if-no-files-found: error
+
+      - name: Upload Windows XP and Server 2003 x64 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-windows-xp-server-2003-x64
+          path: artifact/windows-xp-server-2003-x64
+          if-no-files-found: error
+
+      - name: Upload Windows Vista and Server 2008 x86 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-vista-server-2008-x86
+          path: artifact/vista-server-2008-x86
+          if-no-files-found: error
+
+      - name: Upload Windows Vista and Server 2008 x64 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-vista-server-2008-x64
+          path: artifact/vista-server-2008-x64
+          if-no-files-found: error
+
+      - name: Upload Windows 7 x86 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-windows-7-x86
+          path: artifact/windows-7-x86
+          if-no-files-found: error
+
+      - name: Upload Windows 7 x64 package
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: uniata-windows-7-x64
+          path: artifact/windows-7-x64
+          if-no-files-found: error

@@ -34,7 +34,7 @@ Revision History:
          Alter, Copyright (c) 2002-2015
 
     Some definitions were taken from FreeBSD 4.3-9.2 ATA driver by
-         Søren Schmidt, Copyright (c) 1998-2014
+         SÃ¸ren Schmidt, Copyright (c) 1998-2014
 
 Licence:
     GPLv2
@@ -1003,7 +1003,7 @@ struct _HW_LU_EXTENSION;
 
 typedef struct _IORES {
     union {
-        ULONG Addr;          /* Base address*/
+        ULONG_PTR Addr;      /* Base address*/
         PVOID pAddr;         /* Base address in pointer form */
     };
     ULONG MemIo:1;       /* Memory mapping (1) vs IO ports (0) */

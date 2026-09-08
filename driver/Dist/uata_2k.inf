@@ -1,4 +1,4 @@
-; Copyright (c) 2002-2006 UniATA group
+; Copyright (c) 2002-2026 UniATA group
 
 [Version]
 Signature="$Windows NT$"
@@ -6,7 +6,7 @@ Provider=%ALTERWARE%
 ClassGUID={4D36E97B-E325-11CE-BFC1-08002BE10318}
 Class=SCSIAdapter
 CatalogFile=uniata.cat
-DriverVer=03/09/2006,0.33.7.0
+DriverVer=09/07/2026,0.48.0.0
 
 ;
 ; Source file information
@@ -18,7 +18,6 @@ DriverVer=03/09/2006,0.33.7.0
 [SourceDisksFiles]
 ; Files for disk Initio Installation Disk #1 (SCSIAdapter)
 uniata.sys = 1,,
-atactl.exe = 1,,
 uata_2k.inf = 1,,
 
 ;Class Install
@@ -32,7 +31,6 @@ HKR,,Installer32,,"SysSetup.Dll,HdcClassInstaller"
 
 [DestinationDirs]
 DefaultDestDir = 12 ; DIRID_DRIVERS
-Sys32DestDir = 11 ; DIRID_SYSTEM32
 
 [ControlFlags]
 ExcludeFromSelect = *
@@ -249,7 +247,7 @@ HKLM, system\currentcontrolset\services\pciidex, "Start", %REG_DWORD%, 0x0000000
 
 [uniata_Inst]
 AddReg = DISABLE_PCIIDE
-CopyFiles = uniata_Inst.Miniport,Sys32DestDir
+CopyFiles = uniata_Inst.Miniport
 
 ;
 ; File sections
@@ -258,8 +256,6 @@ CopyFiles = uniata_Inst.Miniport,Sys32DestDir
 [uniata_Inst.Miniport]
 uniata.sys
 
-[Sys32DestDir]
-atactl.exe
 
 
 ;

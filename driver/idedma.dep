@@ -117,10 +117,10 @@ stdafx.cpp : \
 	".\atacmd_map.h"\
 	
 BusMaster_v$(VER).rar : \
-	"Debug\idedma.sys"\
+	"Debug\uniata.sys"\
 	"..\pkg_files.dist"\
 	"..\pkg_files.src"\
-	"Release\idedma.sys"\
+	"Release\uniata.sys"\
 #;"Dist\tools\rebuild_inf.bat" : \
 #;	"Dist\tools\uata_2k.in_"\
 #;	"Dist\tools\uata_2k3.in_"\

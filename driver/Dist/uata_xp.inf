@@ -1,4 +1,4 @@
-; Copyright (c) 2002-2006 UniATA group
+; Copyright (c) 2002-2026 UniATA group
 
 [Version]
 Signature="$Windows NT$"
@@ -6,7 +6,7 @@ Provider=%ALTERWARE%
 ClassGUID={4D36E97B-E325-11CE-BFC1-08002BE10318}
 Class=SCSIAdapter
 CatalogFile=uniata.cat
-DriverVer=03/09/2006,0.33.7.0
+DriverVer=09/07/2026,0.48.0.0
 
 
 [DestinationDirs]
@@ -20,9 +20,9 @@ ExcludeFromSelect = *
 ;
 
 [Manufacturer]
-%ALTERWARE%=UNIATA_HDC
+%ALTERWARE%=UNIATA_HDC, NTx86.5.1
 
-[UNIATA_HDC]
+[UNIATA_HDC.NTx86.5.1]
 ;Well-known adapters
 %PCI\VEN_1191&DEV_0005.DeviceDesc%=uniata_Inst, PCI\VEN_1191&DEV_0005
 %PCI\VEN_1191&DEV_0006.DeviceDesc%=uniata_Inst, PCI\VEN_1191&DEV_0006

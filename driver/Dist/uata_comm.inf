@@ -1,4 +1,4 @@
-; Copyright (c) 2002-2012 UniATA group
+; Copyright (c) 2002-2026 UniATA group
 
 [Version]
 Signature="$Windows NT$"
@@ -6,7 +6,7 @@ Provider=%ALTERWARE%
 ClassGUID={4D36E97D-E325-11CE-BFC1-08002BE10318}
 Class=System
 CatalogFile=uniata.cat
-DriverVer=08/25/2012,0.43.4.2
+DriverVer=09/07/2026,0.48.0.0
 
 
 [DestinationDirs]

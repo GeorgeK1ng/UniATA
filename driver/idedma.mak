@@ -6,7 +6,39 @@
 !IF "$(CFG)" == ""
 CFG=UniATA - Win32 Debug
 !MESSAGE No configuration specified. Defaulting to UniATA - Win32 Debug.
-!ENDIF 
+!ENDIF
+
+!IF "$(ARCH)" == "x64"
+ARCH_CPP_DEFINES=/D_AMD64_ /D_WIN64 /DUNIATA_AMD64
+ARCH_LIB_DIR=amd64
+LINK_MACHINE=AMD64
+ARCH_KERNEL_LIBS=
+ARCH_CROSSNT_LIB=
+ARCH_DEBUG_LIBS=
+!ELSE
+ARCH_CPP_DEFINES=/D_X86_
+ARCH_LIB_DIR=i386
+LINK_MACHINE=I386
+ARCH_KERNEL_LIBS=int64.lib
+ARCH_CROSSNT_LIB=.\Lib\Release\CrossNtK.lib
+ARCH_DEBUG_LIBS=.\Lib\Debug\PostDbgMesgK.lib .\Lib\Debug\CrossNtK.lib
+!ENDIF
+
+!IF "$(DDK_TARGET)" == ""
+DDK_TARGET=WXP
+!ENDIF
+
+!IF "$(DDK_TARGET)" == "WXP"
+LINK_SUBSYSTEM_VERSION=5.01
+!ELSEIF "$(DDK_TARGET)" == "WNET"
+LINK_SUBSYSTEM_VERSION=5.02
+!ELSEIF "$(DDK_TARGET)" == "WLH"
+LINK_SUBSYSTEM_VERSION=6.00
+!ELSEIF "$(DDK_TARGET)" == "WIN7"
+LINK_SUBSYSTEM_VERSION=6.01
+!ELSE
+!ERROR Unsupported DDK_TARGET "$(DDK_TARGET)"
+!ENDIF
 
 !IF "$(CFG)" != "UniATA - Win32 Release" && "$(CFG)" != "UniATA - Win32 Debug"
 !MESSAGE Invalid configuration "$(CFG)" specified.
@@ -50,7 +82,7 @@ DDKINC=/I $(BaseDir)\inc
 !ELSEIF "$(BaseDir)" == "$(BASEDIRXP)"
 #makefile for XP
 BaseDirLib=$(BaseDir)
-DDKINC=/I $(BaseDir)\inc\ddk /I $(BaseDir)\inc
+DDKINC=/I $(BaseDir)\inc\ddk /I $(BaseDir)\inc\api /I $(BaseDir)\inc\crt /I $(BaseDir)\inc
 USE_XPDDK=1
 !ELSE 
 !ERROR BASEDIR is not equal to BASEDIRNT4, BASEDIR2K or BASEDIRXP
@@ -69,22 +101,30 @@ LINK32=link.exe
 
 OUTDIR=.\Release
 INTDIR=.\Release
+!IF "$(ARCH)" == "x64"
+OUTDIR=.\Release_x64
+INTDIR=.\Release_x64
+!ENDIF
 ALTDIR=.\Debug
 !IF "$(USE_XPDDK)" == ""
 LibPath=$(BaseDirLib)\Lib\i386\Free\
 !ELSE 
-LibPath=$(BaseDirLib)\Lib\i386\
+LibPath=$(BaseDirLib)\Lib\$(DDK_TARGET)\$(ARCH_LIB_DIR)\
 !ENDIF 
 
 !ELSEIF  "$(CFG)" == "UniATA - Win32 Debug"
 
 OUTDIR=.\Debug
 INTDIR=.\Debug
+!IF "$(ARCH)" == "x64"
+OUTDIR=.\Debug_x64
+INTDIR=.\Debug_x64
+!ENDIF
 ALTDIR=.\Release
 !IF "$(USE_XPDDK)" == ""
 LibPath=$(BaseDirLib)\Lib\i386\Checked\
 !ELSE 
-LibPath=$(BaseDirLib)\Lib\i386\
+LibPath=$(BaseDirLib)\Lib\$(DDK_TARGET)\$(ARCH_LIB_DIR)\
 !ENDIF 
 
 !ENDIF 
@@ -97,8 +137,8 @@ SymDir=$(OUTDIR)_sym
 
 !MESSAGE ALTDIR: $(ALTDIR)
 
-TargetPath=$(OUTDIR)\IdeDma.sys
-InputPath=$(OUTDIR)\IdeDma.sys
+TargetPath=$(OUTDIR)\uniata.sys
+InputPath=$(OUTDIR)\uniata.sys
 SOURCE="$(InputPath)"
 
 DEF_FILE= \
@@ -117,9 +157,9 @@ LINK32_OBJS= \
 	"$(INTDIR)\idedma.res"
 
 !IF  "$(CFG)" == "UniATA - Win32 Release"
-ALL : "$(OUTDIR)\IdeDma.sys" ".\copy.msg"
+ALL : "$(OUTDIR)\uniata.sys" ".\copy.msg"
 !ELSEIF  "$(CFG)" == "UniATA - Win32 Debug"
-ALL : "$(OUTDIR)\IdeDma.sys" ".\copy.msg"
+ALL : "$(OUTDIR)\uniata.sys" ".\copy.msg"
 !ENDIF 
 
 "uniata_ver.h" : "uniata_ver.h_"
@@ -177,20 +217,20 @@ ALL : "$(OUTDIR)\IdeDma.sys" ".\copy.msg"
 
 PKG : "build_inf.exe" "build_atacmd.exe" "BusMaster_v$(VER).rar"
 !IF "$(VER)" == ""
-!ERROR  "ERROR: Version not specified !!!"
-!ENDIF 
+	@echo ERROR: Version not specified !!! & exit /b 1
+!ENDIF
 
 #ALL :
 #	nmake CFG="UniATA - Win32 Release"
 #	nmake CFG="UniATA - Win32 Debug"
 
-"Release\idedma.sys" : "uniata_ver.h"
+"Release\uniata.sys" : "uniata_ver.h"
 	nmake CFG="UniATA - Win32 Release"
 
-"Debug\idedma.sys" : "uniata_ver.h"
+"Debug\uniata.sys" : "uniata_ver.h"
 	nmake CFG="UniATA - Win32 Debug"
 
-"BusMaster_v$(VER).rar" : ".\Debug\idedma.res" "uniata_ver.h" "..\pkg_files.dist" "..\pkg_files.src" "Release\idedma.sys" "Debug\idedma.sys"
+"BusMaster_v$(VER).rar" : ".\Debug\idedma.res" "uniata_ver.h" "..\pkg_files.dist" "..\pkg_files.src" "Release\uniata.sys" "Debug\uniata.sys"
 	cd ..
 	driver\Dist\tools\fix_dep.bat
 	cd driver
@@ -201,8 +241,7 @@ PKG : "build_inf.exe" "build_atacmd.exe" "BusMaster_v$(VER).rar"
 #	nmake /A CFG="UniATA - Win32 Release"
 #	nmake /A CFG="UniATA - Win32 Debug"
 #!ENDIF 
-	if exist DST_WINDIR copy $(ALTDIR)\IdeDma.sys $(DST_WINDIR)\IdeDma.sys 
-	if exist DST_WINDIR copy $(ALTDIR)\IdeDma.sys $(DST_WINDIR)\IdeDmb.sys 
+	if exist "$(DST_WINDIR)" copy $(ALTDIR)\uniata.sys $(DST_WINDIR)\uniata.sys
 
 	rar a    -s -mdD -m5 BusMaster_v$(VER).rar     @..\pkg_files.dist
 	rar a -r -s -mdD -m5 BusMaster_v$(VER)_Dbg.rar Debug_Dist
@@ -213,12 +252,12 @@ PKG : "build_inf.exe" "build_atacmd.exe" "BusMaster_v$(VER).rar"
 CLEAN :
 	-@erase $(LINK32_OBJS)
 	-@erase "$(INTDIR)\vc60.idb"
-	-@erase "$(OUTDIR)\IdeDma.sys"
+	-@erase "$(OUTDIR)\uniata.sys"
 	-@erase ".\copy.msg"
 	-@erase "$(INTDIR)\idedma.pch"
 !IF  "$(CFG)" == "UniATA - Win32 Debug"
-	-@erase "$(OUTDIR)\IdeDma.map"
-	-@erase "$(OUTDIR)\IdeDma.pdb"
+	-@erase "$(OUTDIR)\uniata.map"
+	-@erase "$(OUTDIR)\uniata.pdb"
 !ENDIF 
 
 "$(OUTDIR)" :
@@ -232,22 +271,22 @@ CLEAN :
 
 !IF  "$(CFG)" == "UniATA - Win32 Release"
 
-CPP_PROJ_BASE=/nologo /Gz /MT /W3 /GX /O2 /Oy- $(DDKINC) /DNDEBUG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS /D_X86_ /D_WIN32_WINNT=0x0400 /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ_BASE=/nologo /Gz /GS- /MT /W3 /O2 /Oy- $(DDKINC) /DNDEBUG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS $(ARCH_CPP_DEFINES) /D_WIN32_WINNT=0x0501 /DNTDDI_VERSION=0x05010000 /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 CPP_PROJ=$(CPP_PROJ_BASE) /Yu"stdafx.h"
 
 MTL_PROJ=/nologo /D "NDEBUG" /mktyplib203 /win32 
 	
-LINK32_FLAGS=/LIBPATH:$(LibPath) ntoskrnl.lib int64.lib Hal.lib ScsiPort.lib .\Lib\Release\CrossNtK.lib /nologo /entry:"DriverEntry" /incremental:no /debug /pdb:"$(OUTDIR)\IdeDma.pdb" /machine:I386 /nodefaultlib /def:".\IdeDma.def" /out:"$(OUTDIR)\IdeDma.sys" /driver /pdbtype:sept /subsystem:native /opt:ref /opt:icf
-#LINK32_FLAGS=$(BaseDir)\Lib\i386\Free\ntoskrnl.lib $(BaseDir)\Lib\i386\Free\int64.lib $(BaseDir)\Lib\i386\Checked\Hal.lib /nologo /entry:"DriverEntry" /incremental:no /pdb:"$(OUTDIR)\IdeDma.pdb" /machine:I386 /nodefaultlib /def:".\IdeDma.def" /out:"$(OUTDIR)\IdeDma.sys" /driver /subsystem:native 
+LINK32_FLAGS=/LIBPATH:$(LibPath) ntoskrnl.lib $(ARCH_KERNEL_LIBS) Hal.lib ScsiPort.lib $(ARCH_CROSSNT_LIB) /nologo /entry:"DriverEntry" /incremental:no /debug /pdb:"$(OUTDIR)\uniata.pdb" /machine:$(LINK_MACHINE) /nodefaultlib /def:".\IdeDma.def" /out:"$(OUTDIR)\uniata.sys" /driver /subsystem:native,$(LINK_SUBSYSTEM_VERSION) /opt:ref /opt:icf
+#LINK32_FLAGS=$(BaseDir)\Lib\i386\Free\ntoskrnl.lib $(BaseDir)\Lib\i386\Free\int64.lib $(BaseDir)\Lib\i386\Checked\Hal.lib /nologo /entry:"DriverEntry" /incremental:no /pdb:"$(OUTDIR)\uniata.pdb" /machine:I386 /nodefaultlib /def:".\IdeDma.def" /out:"$(OUTDIR)\uniata.sys" /driver /subsystem:native
 
 !ELSEIF  "$(CFG)" == "UniATA - Win32 Debug"
 
-CPP_PROJ_BASE=/nologo /Gz /MTd /W3 /GX /Z7 /Od /Oy- $(DDKINC) /D_DEBUG /DDBG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS /D_X86_ /D_WIN32_WINNT=0x0400 /Fp"$(INTDIR)\idedma.pch" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c 
+CPP_PROJ_BASE=/nologo /Gz /GS- /MTd /W3 /Z7 /Od /Oy- $(DDKINC) /D_DEBUG /DDBG /DWIN32 /D_WINDOWS /D_MBCS /D_USRDLL /DIdeDma_EXPORTS $(ARCH_CPP_DEFINES) /D_WIN32_WINNT=0x0501 /DNTDDI_VERSION=0x05010000 /Fp"$(INTDIR)\idedma.pch" /Fo"$(INTDIR)\\" /Fd"$(INTDIR)\\" /FD /c
 CPP_PROJ=$(CPP_PROJ_BASE) /Yu"stdafx.h"
 
 MTL_PROJ=/nologo /D "_DEBUG" /mktyplib203 /win32 
 
-LINK32_FLAGS=/LIBPATH:$(LibPath) ntoskrnl.lib int64.lib Hal.lib ScsiPort.lib .\Lib\Debug\PostDbgMesgK.lib .\Lib\Debug\CrossNtK.lib /nologo /entry:"DriverEntry" /incremental:no /pdb:"$(OUTDIR)\IdeDma.pdb" /map:"$(INTDIR)\IdeDma.map" /debug /machine:I386 /nodefaultlib /def:".\IdeDma.def" /out:"$(OUTDIR)\IdeDma.sys" /pdbtype:sept /driver /subsystem:native,4.00 
+LINK32_FLAGS=/LIBPATH:$(LibPath) ntoskrnl.lib $(ARCH_KERNEL_LIBS) Hal.lib ScsiPort.lib $(ARCH_DEBUG_LIBS) /nologo /entry:"DriverEntry" /incremental:no /pdb:"$(OUTDIR)\uniata.pdb" /map:"$(INTDIR)\uniata.map" /debug /machine:$(LINK_MACHINE) /nodefaultlib /def:".\IdeDma.def" /out:"$(OUTDIR)\uniata.sys" /driver /subsystem:native,$(LINK_SUBSYSTEM_VERSION)
 
 !ENDIF 
 
@@ -274,23 +313,22 @@ LINK32_FLAGS=/LIBPATH:$(LibPath) ntoskrnl.lib int64.lib Hal.lib ScsiPort.lib .\L
 !ENDIF 
 !ENDIF 
 
-"$(OUTDIR)\IdeDma.sys" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "uniata_ver.h"
+"$(OUTDIR)\uniata.sys" : "$(OUTDIR)" $(DEF_FILE) $(LINK32_OBJS) "uniata_ver.h"
     $(LINK32) @<<
   $(LINK32_FLAGS) $(LINK32_OBJS)
 <<
 
 ".\copy.msg" : "$(INTDIR)\idedma.res" $(SOURCE) "$(INTDIR)" "$(OUTDIR)" "$(DistDir)" "$(SymDir)" "Dist\tools\rebuild_inf.bat"
 	<<tempfile.bat 
-	@echo off 
-	if exist DST_WINDIR copy $(TargetPath) $(DST_WINDIR)\IdeDma.sys 
-	if exist DST_WINDIR copy $(TargetPath) $(DST_WINDIR)\IdeDmb.sys 
+	@echo off
+	if exist "$(DST_WINDIR)" copy $(TargetPath) $(DST_WINDIR)\uniata.sys
 !IF "$(NO_BUILD_INF)" == ""
 	del /Q /S $(DistDir)\*
 	copy $(TargetPath) $(DistDir)\uniata.sys
 !IF  "$(CFG)" == "UniATA - Win32 Release"
-	copy $(OutDir)\idedma.pdb  $(SymDir)\uniata.pdb
+	copy $(OutDir)\uniata.pdb  $(SymDir)\uniata.pdb
 !ELSEIF  "$(CFG)" == "UniATA - Win32 Debug"
-	copy $(OutDir)\idedma.pdb  $(DistDir)\uniata.pdb
+	copy $(OutDir)\uniata.pdb  $(DistDir)\uniata.pdb
 !ENDIF 
 	cd Dist\tools
 	call rebuild_inf.bat $(VER)
@@ -359,10 +397,12 @@ SRC=idedma
 "uniata_ver.h_" : "uniata_ver.h_.lk"
     del "uniata_ver.h_.lk"
 
+!IF "$(NO_BUILD_CMD)" == ""
 ".\atacmd_map.h" : "build_atacmd.exe"
-    echo "Build ATA command map"
-    .\build_atacmd.exe > atacmd_map.h
-    .\Dist\tools\srchrep.exe -e -src "\r\n" -dest "\n" "atacmd_map.h"
+	    echo "Build ATA command map"
+	    .\build_atacmd.exe > atacmd_map.h
+	    .\Dist\tools\srchrep.exe -e -src "\r\n" -dest "\n" "atacmd_map.h"
+!ENDIF
 
 ".\uniata_ver.h" : "uniata_ver.h_" "build_inf.exe"
 !IF "$(VER)" != ""
@@ -375,12 +415,12 @@ SRC=idedma
 #    copy ..\build_inf\Release\build_inf.exe .\Dist\tools\build_inf.exe
     .\build_inf.exe --ver_h > uniata_ver.h
     .\Dist\tools\srchrep.exe -e -src "\r\n" -dest "\n" "uniata_ver.h"
-#!MESSAGE  "$(INTDIR)\IdeDma.sys"  "$(ALTDIR)\IdeDma.sys"
+#!MESSAGE  "$(INTDIR)\uniata.sys"  "$(ALTDIR)\uniata.sys"
 !ENDIF 
 
 "$(INTDIR)\$(SRC).res" : "$(SRC).rc" "$(INTDIR)" "uniata_ver.h" "uataerr.h" "build_inf.exe"
-    -@erase ".\$(SRC).res"
+    @if exist ".\$(SRC).res" erase ".\$(SRC).res"
     $(RSC) $(RSC_PROJ) "$(SRC).rc"
-    -@erase "$(INTDIR)\$(SRC).res"
-    -@move "$(SRC).res" "$(INTDIR)\$(SRC).res"
+    @if exist "$(INTDIR)\$(SRC).res" erase "$(INTDIR)\$(SRC).res"
+    @move "$(SRC).res" "$(INTDIR)\$(SRC).res"
 

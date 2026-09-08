@@ -948,6 +948,20 @@ ScsiPortConvertPhysicalAddressToUlong(
 
 #define ScsiPortConvertPhysicalAddressToUlong(Address) ((Address).LowPart)
 
+#ifdef _WIN64
+__forceinline
+SCSI_PHYSICAL_ADDRESS
+ScsiPortConvertUlongPtrToPhysicalAddress(
+    IN ULONG_PTR Address
+    )
+{
+    SCSI_PHYSICAL_ADDRESS physicalAddress;
+    physicalAddress.QuadPart = Address;
+    return physicalAddress;
+}
+#define ScsiPortConvertUlongToPhysicalAddress ScsiPortConvertUlongPtrToPhysicalAddress
+#endif // _WIN64
+
 SCSIPORT_API
 BOOLEAN NTAPI
 ScsiPortValidateRange(
@@ -958,6 +972,36 @@ ScsiPortValidateRange(
     IN ULONG NumberOfBytes,
     IN BOOLEAN InIoSpace
     );
+
+#ifdef _WIN64
+// These ScsiPort accessors are macros in the AMD64 WDK rather than exported
+// scsiport.sys routines. Keep the legacy UniATA call sites architecture-neutral.
+#define ScsiPortMoveMemory                  RtlCopyMemory
+#define ScsiPortReadPortUchar               READ_PORT_UCHAR
+#define ScsiPortReadPortUshort              READ_PORT_USHORT
+#define ScsiPortReadPortUlong               READ_PORT_ULONG
+#define ScsiPortReadPortBufferUchar         READ_PORT_BUFFER_UCHAR
+#define ScsiPortReadPortBufferUshort        READ_PORT_BUFFER_USHORT
+#define ScsiPortReadPortBufferUlong         READ_PORT_BUFFER_ULONG
+#define ScsiPortReadRegisterUchar           READ_REGISTER_UCHAR
+#define ScsiPortReadRegisterUshort          READ_REGISTER_USHORT
+#define ScsiPortReadRegisterUlong           READ_REGISTER_ULONG
+#define ScsiPortReadRegisterBufferUchar     READ_REGISTER_BUFFER_UCHAR
+#define ScsiPortReadRegisterBufferUshort    READ_REGISTER_BUFFER_USHORT
+#define ScsiPortReadRegisterBufferUlong     READ_REGISTER_BUFFER_ULONG
+#define ScsiPortWritePortUchar              WRITE_PORT_UCHAR
+#define ScsiPortWritePortUshort             WRITE_PORT_USHORT
+#define ScsiPortWritePortUlong              WRITE_PORT_ULONG
+#define ScsiPortWritePortBufferUchar        WRITE_PORT_BUFFER_UCHAR
+#define ScsiPortWritePortBufferUshort       WRITE_PORT_BUFFER_USHORT
+#define ScsiPortWritePortBufferUlong        WRITE_PORT_BUFFER_ULONG
+#define ScsiPortWriteRegisterUchar          WRITE_REGISTER_UCHAR
+#define ScsiPortWriteRegisterUshort         WRITE_REGISTER_USHORT
+#define ScsiPortWriteRegisterUlong          WRITE_REGISTER_ULONG
+#define ScsiPortWriteRegisterBufferUchar    WRITE_REGISTER_BUFFER_UCHAR
+#define ScsiPortWriteRegisterBufferUshort   WRITE_REGISTER_BUFFER_USHORT
+#define ScsiPortWriteRegisterBufferUlong    WRITE_REGISTER_BUFFER_ULONG
+#endif // _WIN64
 
 // begin_ntminitape
 
