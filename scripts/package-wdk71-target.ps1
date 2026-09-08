@@ -78,13 +78,6 @@ $blockedSections = @($package.Block | ForEach-Object {
 }) -join ''
 $inf += $blockedSections
 
-# CI cannot provide a production-trusted catalog.  Omitting CatalogFile makes
-# the package complete instead of referring to a non-existent uniata.cat.
-$inf = [regex]::Replace(
-    $inf,
-    '(?m)^CatalogFile(?:\.[^=]+)?=.*\r?$',
-    '; CatalogFile intentionally omitted from this unsigned CI package.'
-)
 if ($package.Decoration.StartsWith('NTamd64')) {
     $inf = $inf.Replace('[SourceDisksNames.x86]', '[SourceDisksNames.amd64]')
 }
@@ -136,8 +129,9 @@ and declares the target platform as $($package.Decoration).
 On NT 5.x, txtsetup.oem can be used for text-mode/F6 integration.  Windows
 Vista and newer use offline INF/SYS injection (for example from WinPE) instead;
 txtsetup.oem is included there only for package-layout consistency.
-The CI package is unsigned.  In particular, 64-bit Windows normally requires a
-properly signed SYS/CAT package before production installation.
+The INF deliberately retains CatalogFile=uniata.cat.  Generate that catalog
+from this final package and sign both the catalog and driver before release.
+In particular, 64-bit Windows normally requires a properly signed package.
 "@
 [IO.File]::WriteAllText(
     (Join-Path $artifactDirectory 'README.txt'),

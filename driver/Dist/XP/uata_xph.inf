@@ -18,12 +18,10 @@ DriverVer=09/07/2026,0.48.0.0
 [SourceDisksFiles]
 ; Files for disk UniATA Installation Disk #1 (SCSIAdapter)
 uniata.sys = 1,..\,
-atactl.exe = 1,..\,
 
 
 
 [DestinationDirs]
-Sys32DestDir = 11 ; System32
 DefaultDestDir = 12 ; DIRID_DRIVERS
 
 [ControlFlags]
@@ -575,12 +573,12 @@ ExcludeFromSelect = *
 
 [uniata_Inst]
 AddReg = uniata_Inst.AddReg
-CopyFiles = uniata_Inst.Miniport, Sys32DestDir
+CopyFiles = uniata_Inst.Miniport
 
 
 [uniata_Inst_Isa]
 AddReg = uniata_Inst.AddReg
-CopyFiles = uniata_Inst.Miniport, Sys32DestDir
+CopyFiles = uniata_Inst.Miniport
 LogConfig = esdilc1, esdilc2, esdilc3, esdilc4
 
 [uniata_Inst.AddReg]
@@ -592,8 +590,6 @@ LogConfig = esdilc1, esdilc2, esdilc3, esdilc4
 [uniata_Inst.Miniport]
 uniata.sys
 
-[Sys32DestDir]
-atactl.exe
 
 
 ;

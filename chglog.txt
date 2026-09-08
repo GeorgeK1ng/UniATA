@@ -5,6 +5,7 @@
 !) fixed pointer truncation and legacy DDK compatibility issues on AMD64
 *) changed the produced driver name from IdeDma.sys to uniata.sys to match the INF files
 +) added per-system x86/x64 packages with version-decorated INF files and txtsetup.oem
+*) removed the optional atactl.exe utility from driver installation INF copy lists
 
 *) minor change
 o) optimization

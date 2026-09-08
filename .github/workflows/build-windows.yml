@@ -133,8 +133,11 @@ jobs:
                 $inf -notmatch [regex]::Escape("[UNIATA_HDC.$decoration]")) {
               throw "$infPath is not restricted to $decoration."
             }
-            if ($inf -match '(?m)^CatalogFile') {
-              throw "$infPath refers to a catalog that is not in the unsigned package."
+            if ($inf -notmatch '(?m)^CatalogFile=uniata\.cat\s*$') {
+              throw "$infPath does not declare the expected uniata.cat catalog."
+            }
+            if ($inf -match '(?i)atactl\.exe') {
+              throw "$infPath tries to install the optional atactl utility."
             }
             $txtsetup = Get-Content (Join-Path 'artifact' "$target\txtsetup.oem") -Raw
             if ($txtsetup -notmatch '\[Files\.scsi\.uniata\]' -or
